@@ -18,6 +18,10 @@ class OllamaMetadataAdapter {
   // Fields the M0 tracer bullet is allowed to suggest changes for.
   static ALLOWED_FIELDS = ['title', 'subtitle', 'narrators']
 
+  // Deterministic, low-temperature sampling so identical input yields identical suggestions
+  // (makes the eval harness reproducible). num_ctx is generous for our tiny prompts.
+  static DEFAULT_OPTIONS = { temperature: 0, top_p: 0.9, repeat_penalty: 1.1, num_ctx: 4096 }
+
   constructor() {}
 
   /**
@@ -54,7 +58,7 @@ class OllamaMetadataAdapter {
    * @param {{ title?: string, subtitle?: string, narrators?: string[] }} fields
    * @returns {Object}
    */
-  buildRequest(model, fields) {
+  buildRequest(model, fields, opts = {}) {
     const current = {
       title: fields.title ?? null,
       subtitle: fields.subtitle ?? null,
@@ -87,7 +91,11 @@ class OllamaMetadataAdapter {
     return {
       model,
       stream: false,
+      // Reasoning models (e.g. qwen3) ramble and behave oddly around clear/remove semantics;
+      // disable thinking by default. Safe for non-thinking models — Ollama ignores it.
+      think: opts.think === undefined ? false : opts.think,
       format: this.responseSchema(),
+      options: { ...OllamaMetadataAdapter.DEFAULT_OPTIONS, ...(opts.options || {}) },
       messages: [
         { role: 'system', content: system },
         { role: 'user', content: user }
@@ -259,11 +267,11 @@ class OllamaMetadataAdapter {
    * @param {number} [timeout] - response timeout in ms
    * @returns {Promise<Array>} normalized suggestion descriptors
    */
-  async getSuggestions({ baseUrl, model, fields }, timeout = this.#responseTimeout) {
+  async getSuggestions({ baseUrl, model, fields, think, options }, timeout = this.#responseTimeout) {
     if (!timeout || isNaN(timeout)) timeout = this.#responseTimeout
 
     const url = `${baseUrl.replace(/\/$/, '')}/api/chat`
-    const body = this.buildRequest(model, fields)
+    const body = this.buildRequest(model, fields, { think, options })
 
     Logger.debug(`[OllamaMetadataAdapter] Requesting suggestions from ${url} (model: ${model})`)
 
