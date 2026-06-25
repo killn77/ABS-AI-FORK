@@ -139,6 +139,22 @@ class OllamaMetadataAdapter {
   }
 
   /**
+   * Some models express "remove this field" by writing the intent as a literal value
+   * (e.g. value:"clear") instead of using the clear flag. Detect those removal words so we
+   * can honor the intent rather than writing the literal word into the field.
+   * @param {string} value
+   * @returns {boolean}
+   */
+  isClearIntent(value) {
+    const v = String(value)
+      .trim()
+      .toLowerCase()
+      .replace(/^[[(]+|[\])]+$/g, '')
+      .trim()
+    return ['clear', 'remove', 'empty', 'blank', 'delete'].includes(v)
+  }
+
+  /**
    * Validate + normalize the model's structured output into suggestion descriptors.
    * Pure: no network, no DB. Returns one descriptor per genuinely-changed allowed field.
    *
@@ -197,6 +213,23 @@ class OllamaMetadataAdapter {
 
       const proposedValue = this.toStringOrUndefined(raw.value)
       if (proposedValue === undefined) continue
+      // Model wrote a removal word ("clear","remove",...) as the value instead of using the
+      // clear flag. Honor it as a clear — but only for fields where empty is valid (never a title).
+      if (this.isClearIntent(proposedValue)) {
+        if (fieldName === 'title') continue
+        if (currentNorm === '') continue
+        seenFields.add(fieldName)
+        out.push({
+          fieldName,
+          currentValue: currentValue === undefined ? null : currentValue,
+          proposedValue: '',
+          clear: true,
+          rationale,
+          confidence,
+          source: 'ollama'
+        })
+        continue
+      }
       // Reject placeholder / garbage proposals a weak model may emit instead of a real value.
       if (this.isPlaceholder(proposedValue)) continue
       // Skip no-ops: the model "suggesting" the value that is already there.

@@ -25,15 +25,18 @@ scorecard. Results are also written to `evals/results-<model>.json` (gitignored)
 
 | model | accuracy | false-positives | miss | pass/part/fail |
 |---|---|---|---|---|
-| **qwen3:14b** (recommended) | **0.972** | **0.000** | 0.063 | 46/4/0 |
-| qwen3:30b-a3b | 0.943 | 0.000 | 0.031 | 42/8/0 |
+| **qwen3:30b-a3b** | **0.986** | **0.000** | 0.031 | 48/2/0 |
+| qwen3:14b | 0.965 | 0.000 | 0.031 | 45/5/0 |
 | qwen2.5:7b (tuned) | 0.872 | 0.046 | 0.125 | 32/18/0 |
 | qwen3:8b | 0.823 | 0.000 | 0.250 | 25/25/0 |
 | llama3.1 | 0.667 | 0.294 | 0.031 | 14/36/0 |
 
+qwen3:30b-a3b and qwen3:14b are post the clear-intent guard fix; the other rows are pre-fix.
+
 Takeaways: all qwen3 models hit **0 false positives**; within qwen3, size only moves the miss
-rate. **qwen3:14b** is the pick (near-perfect, zero false positives, fits comfortably in ~12 GB+
-VRAM); **qwen3:8b** is the safe small-GPU fallback. Re-run after any prompt/model change.
+rate. **qwen3:30b-a3b** is the top scorer and a great fit for ~24 GB GPUs (mixture-of-experts —
+30B quality at ~3B speed). **qwen3:14b** is a near-equal lighter pick (~9 GB); **qwen3:8b** is the
+safe small-GPU fallback (the shipped default). Re-run after any prompt/model change.
 
 ## Scorecard metrics
 

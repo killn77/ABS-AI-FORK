@@ -123,5 +123,29 @@ describe('OllamaMetadataAdapter', () => {
       expect(result).to.have.lengthOf(1)
       expect(result[0].clear).to.equal(false)
     })
+
+    it('treats a removal word ("clear") as a clear for a non-title field', () => {
+      const result = adapter.parseSuggestions({ suggestions: [{ field: 'subtitle', value: 'clear' }] }, { title: 'The Martian', subtitle: 'The Martian' })
+      expect(result).to.have.lengthOf(1)
+      expect(result[0]).to.include({ fieldName: 'subtitle', proposedValue: '', clear: true })
+    })
+
+    it('treats "(remove)" / "Empty" as clear intent', () => {
+      const r1 = adapter.parseSuggestions({ suggestions: [{ field: 'narrators', value: '(remove)' }] }, { narrators: ['Someone'] })
+      expect(r1).to.have.lengthOf(1)
+      expect(r1[0].clear).to.equal(true)
+      const r2 = adapter.parseSuggestions({ suggestions: [{ field: 'subtitle', value: 'Empty' }] }, { subtitle: 'A duplicate' })
+      expect(r2[0].clear).to.equal(true)
+    })
+
+    it('never clears a title even if the model says "clear"', () => {
+      const result = adapter.parseSuggestions({ suggestions: [{ field: 'title', value: 'clear' }] }, { title: 'The Martian' })
+      expect(result).to.have.lengthOf(0)
+    })
+
+    it('drops a clear-intent value when the field is already empty', () => {
+      const result = adapter.parseSuggestions({ suggestions: [{ field: 'subtitle', value: 'clear' }] }, { subtitle: '' })
+      expect(result).to.have.lengthOf(0)
+    })
   })
 })
