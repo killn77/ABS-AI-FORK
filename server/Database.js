@@ -162,6 +162,16 @@ class Database {
     return this.models.device
   }
 
+  /** @type {typeof import('./models/AiMetadataSuggestion')} */
+  get aiMetadataSuggestionModel() {
+    return this.models.aiMetadataSuggestion
+  }
+
+  /** @type {typeof import('./models/AiMetadataReviewDecision')} */
+  get aiMetadataReviewDecisionModel() {
+    return this.models.aiMetadataReviewDecision
+  }
+
   /**
    * Check if db file exists
    * @returns {boolean}
@@ -345,6 +355,9 @@ class Database {
     require('./models/Setting').init(this.sequelize)
     require('./models/CustomMetadataProvider').init(this.sequelize)
     require('./models/MediaItemShare').init(this.sequelize)
+    // AI metadata curation (fork) - registered after libraryItem & user so associations resolve
+    require('./models/AiMetadataSuggestion').init(this.sequelize)
+    require('./models/AiMetadataReviewDecision').init(this.sequelize)
 
     return this.sequelize.sync({ force, alter: false })
   }

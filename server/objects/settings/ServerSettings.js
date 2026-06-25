@@ -56,6 +56,11 @@ class ServerSettings {
     this.language = 'en-us'
     this.allowedOrigins = []
 
+    // AI metadata curation (fork) - single global config, opt-in, local-first (Ollama)
+    this.aiCurationEnabled = false
+    this.aiOllamaBaseUrl = 'http://127.0.0.1:11434'
+    this.aiOllamaModel = 'llama3.1'
+
     this.logLevel = Logger.logLevel
 
     this.version = packageJson.version
@@ -123,6 +128,10 @@ class ServerSettings {
     this.timeFormat = settings.timeFormat || 'HH:mm'
     this.language = settings.language || 'en-us'
     this.allowedOrigins = settings.allowedOrigins || []
+
+    this.aiCurationEnabled = !!settings.aiCurationEnabled // Added by fork (M0)
+    this.aiOllamaBaseUrl = settings.aiOllamaBaseUrl || 'http://127.0.0.1:11434'
+    this.aiOllamaModel = settings.aiOllamaModel || 'llama3.1'
     this.logLevel = settings.logLevel || Logger.logLevel
     this.version = settings.version || null
     this.buildNumber = settings.buildNumber || 0 // Added v2.4.5
@@ -201,6 +210,16 @@ class ServerSettings {
       Logger.info(`[ServerSettings] Using allowIframe from environment variable`)
       this.allowIframe = true
     }
+
+    // AI curation env overrides (fork M0)
+    if (process.env.OLLAMA_BASE_URL && this.aiOllamaBaseUrl !== process.env.OLLAMA_BASE_URL) {
+      Logger.info(`[ServerSettings] Using aiOllamaBaseUrl from environment variable`)
+      this.aiOllamaBaseUrl = process.env.OLLAMA_BASE_URL
+    }
+    if (process.env.OLLAMA_MODEL && this.aiOllamaModel !== process.env.OLLAMA_MODEL) {
+      Logger.info(`[ServerSettings] Using aiOllamaModel from environment variable`)
+      this.aiOllamaModel = process.env.OLLAMA_MODEL
+    }
   }
 
   toJSON() {
@@ -235,6 +254,9 @@ class ServerSettings {
       timeFormat: this.timeFormat,
       language: this.language,
       allowedOrigins: this.allowedOrigins,
+      aiCurationEnabled: this.aiCurationEnabled,
+      aiOllamaBaseUrl: this.aiOllamaBaseUrl,
+      aiOllamaModel: this.aiOllamaModel,
       logLevel: this.logLevel,
       version: this.version,
       buildNumber: this.buildNumber,

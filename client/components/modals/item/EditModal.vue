@@ -112,6 +112,12 @@ export default {
           component: 'modals-item-tabs-match'
         },
         {
+          id: 'ai',
+          title: this.$strings.HeaderAiSuggestions,
+          component: 'modals-item-tabs-ai-suggestions',
+          mediaType: 'book'
+        },
+        {
           id: 'tools',
           title: this.$strings.HeaderTools,
           component: 'modals-item-tabs-tools',

@@ -35,6 +35,7 @@ const MiscController = require('../controllers/MiscController')
 const ShareController = require('../controllers/ShareController')
 const StatsController = require('../controllers/StatsController')
 const ApiKeyController = require('../controllers/ApiKeyController')
+const AiController = require('../controllers/AiController')
 
 class ApiRouter {
   constructor(Server) {
@@ -126,6 +127,11 @@ class ApiRouter {
     this.router.get('/items/:id/file/:fileid/download', LibraryItemController.middleware.bind(this), LibraryItemController.downloadLibraryFile.bind(this))
     this.router.get('/items/:id/ebook/:fileid?', LibraryItemController.middleware.bind(this), LibraryItemController.getEBookFile.bind(this))
     this.router.patch('/items/:id/ebook/:fileid/status', LibraryItemController.middleware.bind(this), LibraryItemController.updateEbookFileStatus.bind(this))
+
+    // AI metadata curation (fork M0) - review-first suggestions; write-back stays on PATCH /items/:id/media
+    this.router.post('/items/:id/ai-suggestions', LibraryItemController.middleware.bind(this), AiController.generateSuggestions.bind(this))
+    this.router.get('/items/:id/ai-suggestions', LibraryItemController.middleware.bind(this), AiController.getSuggestions.bind(this))
+    this.router.post('/ai-suggestions/:suggestionId/decision', AiController.submitDecision.bind(this))
 
     //
     // User Routes
