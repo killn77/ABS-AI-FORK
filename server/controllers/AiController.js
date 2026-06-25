@@ -50,6 +50,47 @@ class AiController {
   }
 
   /**
+   * GET /api/libraries/:id/ai-suggestions
+   * The bulk curation inbox: all pending suggestions across a library.
+   * Access is enforced by LibraryController.middleware.
+   *
+   * @param {RequestWithUser} req
+   * @param {import('express').Response} res
+   */
+  async getLibrarySuggestions(req, res) {
+    try {
+      const suggestions = await AiCurationManager.getPendingSuggestionsForLibrary(req.library.id)
+      res.json({ suggestions })
+    } catch (error) {
+      Logger.error(`[AiController] Failed to get library suggestions for "${req.params.id}"`, error.message)
+      res.status(500).send('Failed to get library AI suggestions')
+    }
+  }
+
+  /**
+   * POST /api/libraries/:id/ai-suggestions/generate
+   * Generate suggestions for a bounded batch of book items lacking pending suggestions.
+   * Body: { limit?: number }. Call repeatedly to make progress.
+   *
+   * @param {RequestWithUser} req
+   * @param {import('express').Response} res
+   */
+  async generateLibrarySuggestions(req, res) {
+    if (!req.user.canUpdate) {
+      Logger.warn(`[AiController] User "${req.user.username}" attempted library batch generation without permission`)
+      return res.sendStatus(403)
+    }
+    try {
+      const summary = await AiCurationManager.generateForLibraryBatch(req.library, req.body?.limit)
+      res.json(summary)
+    } catch (error) {
+      Logger.error(`[AiController] Failed to generate library suggestions for "${req.params.id}"`, error.message)
+      if (error.message === 'AI curation is disabled') return res.status(403).send(error.message)
+      res.status(500).send('Failed to generate library AI suggestions')
+    }
+  }
+
+  /**
    * POST /api/ai-suggestions/:suggestionId/decision
    * Record a human accept/reject/edit decision. Field write-back on accept is done by the
    * client via PATCH /api/items/:id/media; this only audits the decision + resolves status.

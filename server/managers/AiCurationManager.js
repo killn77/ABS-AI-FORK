@@ -1,4 +1,5 @@
 const crypto = require('crypto')
+const { Op } = require('sequelize')
 const Logger = require('../Logger')
 const Database = require('../Database')
 const OllamaMetadataAdapter = require('../providers/OllamaMetadataAdapter')
@@ -110,6 +111,91 @@ class AiCurationManager {
       where: { libraryItemId },
       order: [['createdAt', 'DESC']]
     })
+  }
+
+  /**
+   * The bulk curation inbox: all pending suggestions across one library, newest first,
+   * each joined to its library item (id/title/mediaType) for display. Fast DB-only read.
+   * @param {string} libraryId
+   * @returns {Promise<Array>}
+   */
+  async getPendingSuggestionsForLibrary(libraryId) {
+    return Database.aiMetadataSuggestionModel.findAll({
+      where: { status: 'pending' },
+      include: [
+        {
+          model: Database.libraryItemModel,
+          where: { libraryId },
+          required: true,
+          attributes: ['id', 'title', 'mediaType']
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    })
+  }
+
+  /**
+   * Clamp a requested batch size to a safe range. Bounded because each item is a slow
+   * Ollama call and the whole batch runs inside one request.
+   * @param {any} limit
+   * @returns {number}
+   */
+  clampBatchLimit(limit) {
+    const n = parseInt(limit, 10)
+    if (isNaN(n)) return 5
+    return Math.min(Math.max(n, 1), 25)
+  }
+
+  /**
+   * Generate suggestions for a bounded batch of book items in a library that don't yet have
+   * pending suggestions. Sequential (Ollama is slow); intended to be called repeatedly to make
+   * progress without a long-lived request. A background job is the M2 upgrade.
+   *
+   * @param {import('../models/Library').Library} library
+   * @param {any} [limit]
+   * @returns {Promise<{ processed: number, suggestionsCreated: number, remaining: number }>}
+   */
+  async generateForLibraryBatch(library, limit) {
+    if (!this.settings?.aiCurationEnabled) {
+      throw new Error('AI curation is disabled')
+    }
+    const batchSize = this.clampBatchLimit(limit)
+
+    // Library items that already have a pending suggestion — skip them.
+    const pending = await Database.aiMetadataSuggestionModel.findAll({
+      attributes: ['libraryItemId'],
+      where: { status: 'pending' },
+      include: [{ model: Database.libraryItemModel, where: { libraryId: library.id }, required: true, attributes: [] }]
+    })
+    const skipIds = [...new Set(pending.map((p) => p.libraryItemId))]
+
+    const where = { libraryId: library.id, mediaType: 'book' }
+    if (skipIds.length) where.id = { [Op.notIn]: skipIds }
+
+    const candidates = await Database.libraryItemModel.findAll({
+      attributes: ['id'],
+      where,
+      order: [['createdAt', 'ASC']],
+      limit: batchSize
+    })
+
+    let processed = 0
+    let suggestionsCreated = 0
+    for (const row of candidates) {
+      const item = await Database.libraryItemModel.getExpandedById(row.id)
+      if (!item?.isBook) continue
+      try {
+        const rows = await this.generateSuggestionsForItem(item)
+        suggestionsCreated += rows.length
+        processed++
+      } catch (error) {
+        Logger.error(`[AiCurationManager] Batch item "${row.id}" failed`, error.message)
+      }
+    }
+
+    const remaining = await Database.libraryItemModel.count({ where: { libraryId: library.id, mediaType: 'book' } })
+    Logger.info(`[AiCurationManager] Library batch: processed ${processed}, created ${suggestionsCreated} suggestion(s)`)
+    return { processed, suggestionsCreated, remaining }
   }
 
   /**
