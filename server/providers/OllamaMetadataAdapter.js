@@ -35,10 +35,11 @@ class OllamaMetadataAdapter {
             properties: {
               field: { type: 'string', enum: OllamaMetadataAdapter.ALLOWED_FIELDS },
               value: { type: 'string' },
+              clear: { type: 'boolean' },
               rationale: { type: 'string' },
               confidence: { type: 'number' }
             },
-            required: ['field', 'value']
+            required: ['field']
           }
         }
       },
@@ -63,8 +64,13 @@ class OllamaMetadataAdapter {
     const system =
       'You are a careful audiobook metadata librarian. You are given the current metadata for one audiobook. ' +
       'Propose corrected values ONLY for fields that are clearly wrong, malformed, or could be cleaned up ' +
-      '(e.g. stray file-naming artifacts, inconsistent narrator separators, mojibake, duplicated words). ' +
-      'Do NOT invent facts you cannot infer from the given data. If a field is already fine, do not include it. ' +
+      '(e.g. stray file-naming artifacts like "[Unabridged]", "128kbps", years in braces, inconsistent narrator ' +
+      'separators, mojibake, duplicated words). Do NOT invent facts you cannot infer from the given data. ' +
+      'If a field is already fine, do not include it.\n' +
+      'CRITICAL: "value" must be the ACTUAL corrected text. NEVER return a placeholder such as "[Renamed title]", ' +
+      '"corrected title", "<title>", or the field name itself. If you cannot produce a real corrected value, omit the field.\n' +
+      'To simply REMOVE/empty a field (for example a "subtitle" that merely duplicates the title), set "clear": true ' +
+      'for that field and omit "value" — do not invent a replacement.\n' +
       'For "narrators", return a comma-separated list. Return only fields you would change.'
 
     const user = `Current metadata:\n${JSON.stringify(current, null, 2)}`
@@ -107,6 +113,23 @@ class OllamaMetadataAdapter {
   }
 
   /**
+   * Reject obvious placeholder / garbage proposals a weak model may emit instead of a real value
+   * (e.g. "[Renamed title]", "corrected title", "<title>", or the field name itself).
+   * @param {string} value
+   * @returns {boolean}
+   */
+  isPlaceholder(value) {
+    const v = String(value).trim()
+    if (!v) return true
+    if (/^\[.*\]$/.test(v)) return true // fully bracketed, e.g. [Renamed title]
+    if (/^<.*>$/.test(v)) return true // angle-bracketed, e.g. <title>
+    if (/\b(renamed|corrected|cleaned|placeholder)\b.*\b(title|subtitle|value|here|text)\b/i.test(v)) return true
+    const lower = v.toLowerCase()
+    const denylist = ['renamed title', 'corrected title', 'corrected', 'placeholder', 'n/a', 'na', 'none', 'null', 'unknown', 'tbd', 'todo', 'title', 'subtitle', 'narrator', 'narrators', 'your title here', 'cleaned title']
+    return denylist.includes(lower)
+  }
+
+  /**
    * Validate + normalize the model's structured output into suggestion descriptors.
    * Pure: no network, no DB. Returns one descriptor per genuinely-changed allowed field.
    *
@@ -138,26 +161,44 @@ class OllamaMetadataAdapter {
       if (!OllamaMetadataAdapter.ALLOWED_FIELDS.includes(fieldName)) continue
       if (seenFields.has(fieldName)) continue
 
-      const proposedValue = this.toStringOrUndefined(raw.value)
-      if (proposedValue === undefined) continue
-
       const currentValue = sourceFields[fieldName]
-
-      // Skip no-ops: the model "suggesting" the value that's already there.
-      if (this.normalizeForCompare(currentValue) === this.normalizeForCompare(proposedValue)) continue
+      const currentNorm = this.normalizeForCompare(currentValue)
 
       let confidence
       if (typeof raw.confidence === 'number' && !isNaN(raw.confidence)) {
         confidence = Math.min(1, Math.max(0, raw.confidence))
       }
-
       const rationale = typeof raw.rationale === 'string' && raw.rationale.trim() ? htmlSanitizer.sanitize(raw.rationale) : undefined
+
+      // Clear request: empty the field. Skip if it is already empty (no-op).
+      if (raw.clear === true) {
+        if (currentNorm === '') continue
+        seenFields.add(fieldName)
+        out.push({
+          fieldName,
+          currentValue: currentValue === undefined ? null : currentValue,
+          proposedValue: '',
+          clear: true,
+          rationale,
+          confidence,
+          source: 'ollama'
+        })
+        continue
+      }
+
+      const proposedValue = this.toStringOrUndefined(raw.value)
+      if (proposedValue === undefined) continue
+      // Reject placeholder / garbage proposals a weak model may emit instead of a real value.
+      if (this.isPlaceholder(proposedValue)) continue
+      // Skip no-ops: the model "suggesting" the value that is already there.
+      if (currentNorm === this.normalizeForCompare(proposedValue)) continue
 
       seenFields.add(fieldName)
       out.push({
         fieldName,
         currentValue: currentValue === undefined ? null : currentValue,
         proposedValue,
+        clear: false,
         rationale,
         confidence,
         source: 'ollama'

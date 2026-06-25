@@ -92,5 +92,36 @@ describe('OllamaMetadataAdapter', () => {
       expect(result).to.have.lengthOf(1)
       expect(result[0].currentValue).to.equal(null)
     })
+
+    it('rejects fully-bracketed placeholder proposals (e.g. "[Renamed title]")', () => {
+      const result = adapter.parseSuggestions({ suggestions: [{ field: 'title', value: '[Renamed title]' }] }, { title: 'The Martian' })
+      expect(result).to.have.lengthOf(0)
+    })
+
+    it('rejects denylisted placeholder phrases', () => {
+      const result = adapter.parseSuggestions(
+        { suggestions: [{ field: 'title', value: 'corrected title' }, { field: 'subtitle', value: '<title>' }] },
+        { title: 'X', subtitle: 'Y' }
+      )
+      expect(result).to.have.lengthOf(0)
+    })
+
+    it('honors clear=true by proposing an empty value (and flags it)', () => {
+      const result = adapter.parseSuggestions({ suggestions: [{ field: 'subtitle', clear: true, rationale: 'duplicates the title' }] }, { title: 'The Martian', subtitle: 'The Martian' })
+      expect(result).to.have.lengthOf(1)
+      expect(result[0]).to.include({ fieldName: 'subtitle', proposedValue: '', clear: true, source: 'ollama' })
+      expect(result[0].currentValue).to.equal('The Martian')
+    })
+
+    it('skips a clear request when the field is already empty', () => {
+      const result = adapter.parseSuggestions({ suggestions: [{ field: 'subtitle', clear: true }] }, { title: 'The Martian', subtitle: '' })
+      expect(result).to.have.lengthOf(0)
+    })
+
+    it('tags normal (non-clear) suggestions with clear:false', () => {
+      const result = adapter.parseSuggestions({ suggestions: [{ field: 'title', value: 'The Martian' }] }, { title: 'The Martian [Unabridged]' })
+      expect(result).to.have.lengthOf(1)
+      expect(result[0].clear).to.equal(false)
+    })
   })
 })

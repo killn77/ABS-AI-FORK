@@ -24,8 +24,9 @@ services:
       # Reach the Ollama running on your HOST machine from inside the container.
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
       # The model the fork will use — must already be pulled in Ollama
-      # (e.g. `ollama pull llama3.1`).
-      - OLLAMA_MODEL=llama3.1
+      # (e.g. `ollama pull qwen2.5:7b`). qwen2.5 follows the structured-output
+      # instructions more reliably than llama3.1 for metadata cleanup.
+      - OLLAMA_MODEL=qwen2.5:7b
     extra_hosts:
       # Makes host.docker.internal resolve to the host on all platforms.
       - "host.docker.internal:host-gateway"
@@ -33,7 +34,8 @@ services:
       # Fork-only config + metadata. Completely separate from your real ABS data.
       - ./.fork-data/config:/config
       - ./.fork-data/metadata:/metadata
-      # Put a FEW test audiobooks here (a COPY is safest). Mounted read-only so
-      # the fork can scan them but can never modify the files.
-      - ./.fork-data/audiobooks:/audiobooks:ro
+      # Real audiobook library mounted READ-ONLY: the fork can scan it but can
+      # never modify the files. AI suggestions are written to the fork's own DB
+      # (./.fork-data/config), never back to these files.
+      - Q:/Media/Audiobooks:/audiobooks:ro
     restart: unless-stopped

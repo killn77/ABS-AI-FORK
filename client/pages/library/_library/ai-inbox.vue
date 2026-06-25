@@ -25,7 +25,7 @@
             </div>
             <div class="text-sm">
               <p class="text-gray-400"><span class="text-gray-500">{{ $strings.LabelAiSuggestionCurrent }}:</span> {{ displayValue(s.currentValue) }}</p>
-              <p class="text-success"><span class="text-gray-500">{{ $strings.LabelAiSuggestionProposed }}:</span> {{ s.proposedValue }}</p>
+              <p class="text-success"><span class="text-gray-500">{{ $strings.LabelAiSuggestionProposed }}:</span> {{ s.proposedValue || '(clear field)' }}</p>
             </div>
             <p v-if="s.rationale" class="text-xs text-gray-400 mt-1 italic">{{ s.rationale }}</p>
             <div class="flex justify-end mt-2 space-x-2">
