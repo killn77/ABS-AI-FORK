@@ -12,6 +12,7 @@
 /client/dist/
 /dist/
 /deploy/
+/.fork-data/
 /coverage/
 /.nyc_output/
 /ffmpeg*

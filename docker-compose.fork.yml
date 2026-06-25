@@ -1,0 +1,39 @@
+### FORK TESTING COMPOSE — isolated from any existing Audiobookshelf install ###
+#
+# Builds the fork from local source and runs it on a SEPARATE port with FORK-ONLY
+# data volumes, so it never reads or writes your existing ABS config/database.
+#
+#   docker compose -f docker-compose.fork.yml up --build
+#
+# Then open http://localhost:13379   (your existing ABS on :13378 is untouched)
+#
+# To stop + remove:   docker compose -f docker-compose.fork.yml down
+# To wipe fork data:  delete the ./.fork-data directory
+#
+services:
+  audiobookshelf-fork:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: audiobookshelf-fork
+    ports:
+      # host 13379 -> container 80. Deliberately NOT 13378 so it can't collide
+      # with a local ABS install.
+      - 13379:80
+    environment:
+      # Reach the Ollama running on your HOST machine from inside the container.
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      # The model the fork will use — must already be pulled in Ollama
+      # (e.g. `ollama pull llama3.1`).
+      - OLLAMA_MODEL=llama3.1
+    extra_hosts:
+      # Makes host.docker.internal resolve to the host on all platforms.
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Fork-only config + metadata. Completely separate from your real ABS data.
+      - ./.fork-data/config:/config
+      - ./.fork-data/metadata:/metadata
+      # Put a FEW test audiobooks here (a COPY is safest). Mounted read-only so
+      # the fork can scan them but can never modify the files.
+      - ./.fork-data/audiobooks:/audiobooks:ro
+    restart: unless-stopped
