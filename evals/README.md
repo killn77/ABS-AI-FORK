@@ -23,20 +23,28 @@ scorecard. Results are also written to `evals/results-<model>.json` (gitignored)
 
 ## Latest sweep (50-case corpus, tuned prompt)
 
+Deterministic runs (`temperature:0`, natural thinking) over the 50-case corpus:
+
 | model | accuracy | false-positives | miss | pass/part/fail |
 |---|---|---|---|---|
-| **qwen3:30b-a3b** | **0.986** | **0.000** | 0.031 | 48/2/0 |
-| qwen3:14b | 0.965 | 0.000 | 0.031 | 45/5/0 |
-| qwen2.5:7b (tuned) | 0.872 | 0.046 | 0.125 | 32/18/0 |
-| qwen3:8b | 0.823 | 0.000 | 0.250 | 25/25/0 |
-| llama3.1 | 0.667 | 0.294 | 0.031 | 14/36/0 |
+| **qwen3:30b-a3b** | **0.979** | **0.000** | 0.063 | 47/3/0 |
+| qwen3:14b | 0.972 | 0.000 | 0.031 | 46/4/0 |
+| mistral-small3.2:24b | 0.936 | 0.000 | 0.156 | 41/9/0 |
+| qwen2.5:7b | 0.901 | 0.037 | 0.063 | 36/14/0 |
+| qwen3:8b † | 0.823 | 0.000 | 0.250 | 25/25/0 |
+| llama3.1 † | 0.667 | 0.294 | 0.031 | 14/36/0 |
 
-qwen3:30b-a3b and qwen3:14b are post the clear-intent guard fix; the other rows are pre-fix.
+† older non-deterministic baselines, kept for reference.
 
-Takeaways: all qwen3 models hit **0 false positives**; within qwen3, size only moves the miss
-rate. **qwen3:30b-a3b** is the top scorer and a great fit for ~24 GB GPUs (mixture-of-experts —
-30B quality at ~3B speed). **qwen3:14b** is a near-equal lighter pick (~9 GB); **qwen3:8b** is the
-safe small-GPU fallback (the shipped default). Re-run after any prompt/model change.
+Takeaways:
+- **qwen3:30b-a3b** is the top scorer and a great fit for ~24 GB GPUs (MoE — 30B quality at
+  ~3B speed); **qwen3:14b** is a near-tie at half the VRAM (~9 GB, lower miss) — the value pick.
+- All qwen3 models + mistral-small3.2 hit **0 false positives** (the trust metric). mistral is a
+  solid alternative but misses ~2.5× more than qwen3:30b, mostly narrator normalizations.
+- **Keep qwen3 thinking ON.** Disabling it (`think:false`) dropped qwen3:30b to 0.851 (miss 0.375).
+- `temperature:0` makes every run reproducible (verified: identical across two runs) — so this
+  table is a real regression baseline. Use `OLLAMA_THINK=true|false node evals/run-eval.js <model>`
+  to A/B reasoning.
 
 ## Scorecard metrics
 
