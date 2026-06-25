@@ -24,10 +24,10 @@ services:
       # Reach the Ollama running on your HOST machine from inside the container.
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
       # The model the fork will use — must already be pulled in Ollama
-      # (e.g. `ollama pull qwen3:14b`). qwen3:14b won the eval sweep: 0.972
-      # accuracy, ZERO false positives (see evals/README.md). Drop to qwen3:8b
-      # for smaller GPUs (0 false positives, more misses).
-      - OLLAMA_MODEL=qwen3:14b
+      # (e.g. `ollama pull qwen3:30b-a3b`). qwen3:30b-a3b is the eval top scorer:
+      # 0.986 accuracy, ZERO false positives (see evals/README.md), and runs fast
+      # on ~24GB via MoE. Use qwen3:14b (~9GB) or qwen3:8b for smaller GPUs.
+      - OLLAMA_MODEL=qwen3:30b-a3b
     extra_hosts:
       # Makes host.docker.internal resolve to the host on all platforms.
       - "host.docker.internal:host-gateway"
