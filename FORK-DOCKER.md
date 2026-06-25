@@ -18,7 +18,7 @@ library database.
 1. **Docker Desktop** running.
 2. **Ollama** running on your host with a model pulled:
    ```bash
-   ollama pull llama3.1
+   ollama pull qwen3:14b   # eval-winning model (compose default); use qwen3:8b for smaller GPUs
    ```
 3. A handful of **test audiobooks**. Copy a few into `./.fork-data/audiobooks/`
    (a copy is safest — the mount is read-only, but a copy removes all doubt).

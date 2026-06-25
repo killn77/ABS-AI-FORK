@@ -59,7 +59,7 @@ class ServerSettings {
     // AI metadata curation (fork) - single global config, opt-in, local-first (Ollama)
     this.aiCurationEnabled = false
     this.aiOllamaBaseUrl = 'http://127.0.0.1:11434'
-    this.aiOllamaModel = 'llama3.1'
+    this.aiOllamaModel = 'qwen3:8b'
 
     this.logLevel = Logger.logLevel
 
@@ -131,7 +131,7 @@ class ServerSettings {
 
     this.aiCurationEnabled = !!settings.aiCurationEnabled // Added by fork (M0)
     this.aiOllamaBaseUrl = settings.aiOllamaBaseUrl || 'http://127.0.0.1:11434'
-    this.aiOllamaModel = settings.aiOllamaModel || 'llama3.1'
+    this.aiOllamaModel = settings.aiOllamaModel || 'qwen3:8b'
     this.logLevel = settings.logLevel || Logger.logLevel
     this.version = settings.version || null
     this.buildNumber = settings.buildNumber || 0 // Added v2.4.5

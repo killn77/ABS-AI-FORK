@@ -27,7 +27,7 @@ Global settings (in `ServerSettings`, env-overridable):
 |---|---|---|
 | `aiCurationEnabled` | `false` | — |
 | `aiOllamaBaseUrl` | `http://127.0.0.1:11434` | `OLLAMA_BASE_URL` |
-| `aiOllamaModel` | `llama3.1` | `OLLAMA_MODEL` |
+| `aiOllamaModel` | `qwen3:8b` | `OLLAMA_MODEL` |
 
 The feature returns `403 AI curation is disabled` until `aiCurationEnabled` is set to `true` (via the settings
 API/DB; an admin UI toggle is M1).

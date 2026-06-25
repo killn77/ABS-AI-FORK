@@ -21,6 +21,20 @@ OLLAMA_BASE_URL=http://127.0.0.1:11434 node evals/run-eval.js qwen2.5:7b
 Output: a per-case PASS/PART/FAIL line (with the reason for each failed expectation) and a
 scorecard. Results are also written to `evals/results-<model>.json` (gitignored).
 
+## Latest sweep (50-case corpus, tuned prompt)
+
+| model | accuracy | false-positives | miss | pass/part/fail |
+|---|---|---|---|---|
+| **qwen3:14b** (recommended) | **0.972** | **0.000** | 0.063 | 46/4/0 |
+| qwen3:30b-a3b | 0.943 | 0.000 | 0.031 | 42/8/0 |
+| qwen2.5:7b (tuned) | 0.872 | 0.046 | 0.125 | 32/18/0 |
+| qwen3:8b | 0.823 | 0.000 | 0.250 | 25/25/0 |
+| llama3.1 | 0.667 | 0.294 | 0.031 | 14/36/0 |
+
+Takeaways: all qwen3 models hit **0 false positives**; within qwen3, size only moves the miss
+rate. **qwen3:14b** is the pick (near-perfect, zero false positives, fits comfortably in ~12 GB+
+VRAM); **qwen3:8b** is the safe small-GPU fallback. Re-run after any prompt/model change.
+
 ## Scorecard metrics
 
 - `expectationAccuracy` — fraction of all per-field expectations satisfied (headline number).
