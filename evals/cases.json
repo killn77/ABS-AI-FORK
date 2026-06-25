@@ -1,0 +1,77 @@
+[
+  {
+    "id": "title-bitrate-format-tags",
+    "category": "file-naming-artifacts",
+    "input": { "title": "Project Hail Mary [Unabridged] 128kbps", "subtitle": null, "narrators": ["Ray Porter"] },
+    "expect": [
+      { "field": "title", "rule": "clean", "shouldContain": ["Project Hail Mary"], "mustNotContain": ["128kbps", "unabridged", "[", "]"] },
+      { "field": "subtitle", "rule": "none" },
+      { "field": "narrators", "rule": "none" }
+    ]
+  },
+  {
+    "id": "title-format-audiobook-tag",
+    "category": "file-naming-artifacts",
+    "input": { "title": "dune - part 1 - 128kbps [audiobook]", "subtitle": null, "narrators": ["Scott Brick"] },
+    "expect": [
+      { "field": "title", "rule": "clean", "shouldContain": ["Dune"], "mustNotContain": ["128kbps", "audiobook", "part 1"] },
+      { "field": "narrators", "rule": "none" }
+    ]
+  },
+  {
+    "id": "subtitle-duplicates-title",
+    "category": "redundant-subtitle",
+    "input": { "title": "The Martian", "subtitle": "The Martian", "narrators": ["Wil Wheaton"] },
+    "expect": [
+      { "field": "title", "rule": "none" },
+      { "field": "subtitle", "rule": "clear" },
+      { "field": "narrators", "rule": "none" }
+    ]
+  },
+  {
+    "id": "narrator-whitespace-case",
+    "category": "narrator-normalization",
+    "input": { "title": "Artemis", "subtitle": null, "narrators": ["rosario  dawson "] },
+    "expect": [
+      { "field": "title", "rule": "none" },
+      { "field": "narrators", "rule": "normalize", "shouldContain": ["Rosario Dawson"], "mustNotContain": ["  "] }
+    ]
+  },
+  {
+    "id": "narrator-ampersand-separator",
+    "category": "narrator-normalization",
+    "input": { "title": "Good Omens", "subtitle": null, "narrators": ["Michael Sheen & David Tennant"] },
+    "expect": [
+      { "field": "narrators", "rule": "normalize", "shouldContain": ["Michael Sheen", "David Tennant"], "mustNotContain": ["&"] },
+      { "field": "title", "rule": "none" }
+    ]
+  },
+  {
+    "id": "clean-book-no-changes",
+    "category": "clean-control",
+    "input": { "title": "Cheshire Crossing", "subtitle": null, "narrators": ["Sophie Amoss"] },
+    "expect": [
+      { "field": "title", "rule": "none" },
+      { "field": "subtitle", "rule": "none" },
+      { "field": "narrators", "rule": "none" }
+    ]
+  },
+  {
+    "id": "title-trailing-year-braces",
+    "category": "file-naming-artifacts",
+    "input": { "title": "Artemis {2017}", "subtitle": null, "narrators": ["Rosario Dawson"] },
+    "expect": [
+      { "field": "title", "rule": "clean", "shouldContain": ["Artemis"], "mustNotContain": ["{", "}", "2017"] },
+      { "field": "narrators", "rule": "none" }
+    ]
+  },
+  {
+    "id": "title-narrator-embedded-in-title",
+    "category": "file-naming-artifacts",
+    "input": { "title": "The Egg (Narrated by Andy Weir)", "subtitle": null, "narrators": ["Andy Weir"] },
+    "expect": [
+      { "field": "title", "rule": "clean", "shouldContain": ["The Egg"], "mustNotContain": ["narrated by", "andy weir"] },
+      { "field": "narrators", "rule": "none" }
+    ]
+  }
+]
