@@ -91,6 +91,24 @@
           </div>
 
           <div class="pt-4">
+            <h2 class="font-semibold">{{ $strings.HeaderSettingsAiCuration }}</h2>
+          </div>
+
+          <div role="article" :aria-label="$strings.LabelSettingsAiCurationEnabledHelp" class="flex items-center py-2">
+            <ui-toggle-switch :label="$strings.LabelSettingsAiCurationEnabled" v-model="newServerSettings.aiCurationEnabled" :disabled="updatingServerSettings" @input="(val) => updateSettingsKey('aiCurationEnabled', val)" />
+            <ui-tooltip aria-hidden="true" :text="$strings.LabelSettingsAiCurationEnabledHelp">
+              <p class="pl-4">
+                <span id="settings-ai-curation-enabled">{{ $strings.LabelSettingsAiCurationEnabled }}</span>
+                <span class="material-symbols icon-text">info</span>
+              </p>
+            </ui-tooltip>
+          </div>
+          <div v-if="newServerSettings.aiCurationEnabled" class="w-72 ml-14 mb-2 space-y-2">
+            <ui-text-input-with-label v-model="newServerSettings.aiOllamaBaseUrl" :label="$strings.LabelSettingsAiOllamaBaseUrl" :disabled="updatingServerSettings" @blur="() => updateSettingsKey('aiOllamaBaseUrl', newServerSettings.aiOllamaBaseUrl)" />
+            <ui-text-input-with-label v-model="newServerSettings.aiOllamaModel" :label="$strings.LabelSettingsAiOllamaModel" :disabled="updatingServerSettings" @blur="() => updateSettingsKey('aiOllamaModel', newServerSettings.aiOllamaModel)" />
+          </div>
+
+          <div class="pt-4">
             <h2 class="font-semibold">{{ $strings.HeaderSettingsWebClient }}</h2>
           </div>
 
