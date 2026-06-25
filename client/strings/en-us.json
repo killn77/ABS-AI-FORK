@@ -123,6 +123,7 @@
   "ErrorUploadLacksTitle": "Must have a title",
   "HeaderAccount": "Account",
   "HeaderAddCustomMetadataProvider": "Add Custom Metadata Provider",
+  "HeaderAiCurationInbox": "AI Inbox",
   "HeaderAiSuggestions": "AI Suggestions",
   "HeaderAdvanced": "Advanced",
   "HeaderApiKeys": "API Keys",

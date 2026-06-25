@@ -76,6 +76,14 @@
         <div v-show="isStatsPage" class="h-full w-0.5 bg-yellow-400 absolute top-0 left-0" />
       </nuxt-link>
 
+      <nuxt-link v-if="isBookLibrary && userIsAdminOrUp" :to="`/library/${currentLibraryId}/ai-inbox`" class="w-full h-20 flex flex-col items-center justify-center text-white/80 border-b border-primary/70 hover:bg-primary cursor-pointer relative" :class="isAiInboxPage ? 'bg-primary/80' : 'bg-bg/60'">
+        <span class="material-symbols text-2xl">auto_awesome</span>
+
+        <p class="pt-1 text-center leading-4" style="font-size: 0.9rem">{{ $strings.HeaderAiCurationInbox }}</p>
+
+        <div v-show="isAiInboxPage" class="h-full w-0.5 bg-yellow-400 absolute top-0 left-0" />
+      </nuxt-link>
+
       <nuxt-link v-if="isPodcastLibrary && userIsAdminOrUp" :to="`/library/${currentLibraryId}/podcast/search`" class="w-full h-20 flex flex-col items-center justify-center text-white/80 border-b border-primary/70 hover:bg-primary cursor-pointer relative" :class="isPodcastSearchPage ? 'bg-primary/80' : 'bg-bg/60'">
         <span class="abs-icons icon-podcast text-xl"></span>
 
@@ -179,6 +187,9 @@ export default {
     },
     isStatsPage() {
       return this.$route.name === 'library-library-stats'
+    },
+    isAiInboxPage() {
+      return this.$route.name === 'library-library-ai-inbox'
     },
     libraryBookshelfPage() {
       return this.$route.name === 'library-library-bookshelf-id'
