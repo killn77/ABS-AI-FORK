@@ -2,76 +2,1451 @@
   {
     "id": "title-bitrate-format-tags",
     "category": "file-naming-artifacts",
-    "input": { "title": "Project Hail Mary [Unabridged] 128kbps", "subtitle": null, "narrators": ["Ray Porter"] },
+    "input": {
+      "title": "Project Hail Mary [Unabridged] 128kbps",
+      "subtitle": null,
+      "narrators": [
+        "Ray Porter"
+      ]
+    },
     "expect": [
-      { "field": "title", "rule": "clean", "shouldContain": ["Project Hail Mary"], "mustNotContain": ["128kbps", "unabridged", "[", "]"] },
-      { "field": "subtitle", "rule": "none" },
-      { "field": "narrators", "rule": "none" }
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Project Hail Mary"
+        ],
+        "mustNotContain": [
+          "128kbps",
+          "unabridged",
+          "[",
+          "]"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
     ]
   },
   {
     "id": "title-format-audiobook-tag",
     "category": "file-naming-artifacts",
-    "input": { "title": "dune - part 1 - 128kbps [audiobook]", "subtitle": null, "narrators": ["Scott Brick"] },
+    "input": {
+      "title": "dune - part 1 - 128kbps [audiobook]",
+      "subtitle": null,
+      "narrators": [
+        "Scott Brick"
+      ]
+    },
     "expect": [
-      { "field": "title", "rule": "clean", "shouldContain": ["Dune"], "mustNotContain": ["128kbps", "audiobook", "part 1"] },
-      { "field": "narrators", "rule": "none" }
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Dune"
+        ],
+        "mustNotContain": [
+          "128kbps",
+          "audiobook",
+          "part 1"
+        ]
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
     ]
   },
   {
     "id": "subtitle-duplicates-title",
     "category": "redundant-subtitle",
-    "input": { "title": "The Martian", "subtitle": "The Martian", "narrators": ["Wil Wheaton"] },
+    "input": {
+      "title": "The Martian",
+      "subtitle": "The Martian",
+      "narrators": [
+        "Wil Wheaton"
+      ]
+    },
     "expect": [
-      { "field": "title", "rule": "none" },
-      { "field": "subtitle", "rule": "clear" },
-      { "field": "narrators", "rule": "none" }
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "clear"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
     ]
   },
   {
     "id": "narrator-whitespace-case",
     "category": "narrator-normalization",
-    "input": { "title": "Artemis", "subtitle": null, "narrators": ["rosario  dawson "] },
+    "input": {
+      "title": "Artemis",
+      "subtitle": null,
+      "narrators": [
+        "rosario  dawson "
+      ]
+    },
     "expect": [
-      { "field": "title", "rule": "none" },
-      { "field": "narrators", "rule": "normalize", "shouldContain": ["Rosario Dawson"], "mustNotContain": ["  "] }
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "normalize",
+        "shouldContain": [
+          "Rosario Dawson"
+        ],
+        "mustNotContain": [
+          "  "
+        ]
+      }
     ]
   },
   {
     "id": "narrator-ampersand-separator",
     "category": "narrator-normalization",
-    "input": { "title": "Good Omens", "subtitle": null, "narrators": ["Michael Sheen & David Tennant"] },
+    "input": {
+      "title": "Good Omens",
+      "subtitle": null,
+      "narrators": [
+        "Michael Sheen & David Tennant"
+      ]
+    },
     "expect": [
-      { "field": "narrators", "rule": "normalize", "shouldContain": ["Michael Sheen", "David Tennant"], "mustNotContain": ["&"] },
-      { "field": "title", "rule": "none" }
+      {
+        "field": "narrators",
+        "rule": "normalize",
+        "shouldContain": [
+          "Michael Sheen",
+          "David Tennant"
+        ],
+        "mustNotContain": [
+          "&"
+        ]
+      },
+      {
+        "field": "title",
+        "rule": "none"
+      }
     ]
   },
   {
     "id": "clean-book-no-changes",
     "category": "clean-control",
-    "input": { "title": "Cheshire Crossing", "subtitle": null, "narrators": ["Sophie Amoss"] },
+    "input": {
+      "title": "Cheshire Crossing",
+      "subtitle": null,
+      "narrators": [
+        "Sophie Amoss"
+      ]
+    },
     "expect": [
-      { "field": "title", "rule": "none" },
-      { "field": "subtitle", "rule": "none" },
-      { "field": "narrators", "rule": "none" }
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
     ]
   },
   {
     "id": "title-trailing-year-braces",
     "category": "file-naming-artifacts",
-    "input": { "title": "Artemis {2017}", "subtitle": null, "narrators": ["Rosario Dawson"] },
+    "input": {
+      "title": "Artemis {2017}",
+      "subtitle": null,
+      "narrators": [
+        "Rosario Dawson"
+      ]
+    },
     "expect": [
-      { "field": "title", "rule": "clean", "shouldContain": ["Artemis"], "mustNotContain": ["{", "}", "2017"] },
-      { "field": "narrators", "rule": "none" }
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Artemis"
+        ],
+        "mustNotContain": [
+          "{",
+          "}",
+          "2017"
+        ]
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
     ]
   },
   {
     "id": "title-narrator-embedded-in-title",
     "category": "file-naming-artifacts",
-    "input": { "title": "The Egg (Narrated by Andy Weir)", "subtitle": null, "narrators": ["Andy Weir"] },
+    "input": {
+      "title": "The Egg (Narrated by Andy Weir)",
+      "subtitle": null,
+      "narrators": [
+        "Andy Weir"
+      ]
+    },
     "expect": [
-      { "field": "title", "rule": "clean", "shouldContain": ["The Egg"], "mustNotContain": ["narrated by", "andy weir"] },
-      { "field": "narrators", "rule": "none" }
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "The Egg"
+        ],
+        "mustNotContain": [
+          "narrated by",
+          "andy weir"
+        ]
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "silent-patient-bitrate-unabridged-tag",
+    "category": "file-naming-artifacts",
+    "input": {
+      "title": "The Silent Patient [Unabridged] 128kbps",
+      "subtitle": "A Novel",
+      "narrators": [
+        "Louise Brealey",
+        "Jack Hawkins"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "The Silent Patient"
+        ],
+        "mustNotContain": [
+          "Unabridged",
+          "128kbps",
+          "[",
+          "]"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "project-hail-mary-year-mp3-bitrate",
+    "category": "file-naming-artifacts",
+    "input": {
+      "title": "Project Hail Mary (2021) MP3 320",
+      "subtitle": null,
+      "narrators": [
+        "Ray Porter"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Project Hail Mary"
+        ],
+        "mustNotContain": [
+          "2021",
+          "MP3",
+          "320",
+          "(",
+          ")"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "educated-spurious-track-number-m4b",
+    "category": "file-naming-artifacts",
+    "input": {
+      "title": "Educated - Track 12 of 45 [M4B]",
+      "subtitle": "A Memoir",
+      "narrators": [
+        "Julia Whelan"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Educated"
+        ],
+        "mustNotContain": [
+          "Track 12",
+          "of 45",
+          "M4B",
+          "[",
+          "]"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "war-of-the-worlds-dramatized-bitrate",
+    "category": "file-naming-artifacts",
+    "input": {
+      "title": "The War of the Worlds (Dramatized) 192 kbps",
+      "subtitle": null,
+      "narrators": [
+        "Christian Slater",
+        "Marc Thompson",
+        "Common"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "The War of the Worlds"
+        ],
+        "mustNotContain": [
+          "Dramatized",
+          "192",
+          "kbps",
+          "(",
+          ")"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "becoming-braced-year-audiobook-tag",
+    "category": "file-naming-artifacts",
+    "input": {
+      "title": "Becoming {2018} [audiobook]",
+      "subtitle": "",
+      "narrators": [
+        "Michelle Obama"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Becoming"
+        ],
+        "mustNotContain": [
+          "2018",
+          "audiobook",
+          "{",
+          "}",
+          "[",
+          "]"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "nineteen-eighty-four-year-is-real-title",
+    "category": "file-naming-artifacts",
+    "input": {
+      "title": "1984 [Unabridged] 64k",
+      "subtitle": "A Novel",
+      "narrators": [
+        "Simon Vance"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "1984"
+        ],
+        "mustNotContain": [
+          "Unabridged",
+          "64k",
+          "[",
+          "]"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "exact-duplicate-midnight-library",
+    "category": "redundant-subtitle",
+    "input": {
+      "title": "The Midnight Library",
+      "subtitle": "The Midnight Library",
+      "narrators": [
+        "Carey Mulligan"
+      ]
+    },
+    "expect": [
+      {
+        "field": "subtitle",
+        "rule": "clear"
+      },
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "title-unabridged-parens-hail-mary",
+    "category": "redundant-subtitle",
+    "input": {
+      "title": "Project Hail Mary",
+      "subtitle": "Project Hail Mary (Unabridged)",
+      "narrators": [
+        "Ray Porter"
+      ]
+    },
+    "expect": [
+      {
+        "field": "subtitle",
+        "rule": "clear"
+      },
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "title-dash-unabridged-silent-patient",
+    "category": "redundant-subtitle",
+    "input": {
+      "title": "The Silent Patient",
+      "subtitle": "The Silent Patient - Unabridged",
+      "narrators": [
+        "Jack Hawkins",
+        "Louise Brealey"
+      ]
+    },
+    "expect": [
+      {
+        "field": "subtitle",
+        "rule": "clear"
+      },
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "case-variant-duplicate-atomic-habits",
+    "category": "redundant-subtitle",
+    "input": {
+      "title": "Atomic Habits",
+      "subtitle": "ATOMIC HABITS",
+      "narrators": [
+        "James Clear"
+      ]
+    },
+    "expect": [
+      {
+        "field": "subtitle",
+        "rule": "clear"
+      },
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "legit-subtitle-a-novel-goldfinch",
+    "category": "redundant-subtitle",
+    "input": {
+      "title": "The Goldfinch",
+      "subtitle": "A Novel",
+      "narrators": [
+        "David Pittu"
+      ]
+    },
+    "expect": [
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "legit-subtitle-stormlight-way-of-kings",
+    "category": "redundant-subtitle",
+    "input": {
+      "title": "The Way of Kings",
+      "subtitle": "Book One of The Stormlight Archive",
+      "narrators": [
+        "Kate Reading",
+        "Michael Kramer"
+      ]
+    },
+    "expect": [
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "narrator-ampersand-separator-cleanup",
+    "category": "narrator-normalization",
+    "input": {
+      "title": "Good Omens",
+      "subtitle": "The Nice and Accurate Prophecies of Agnes Nutter, Witch",
+      "narrators": [
+        "Michael Sheen & David Tennant"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "normalize",
+        "shouldContain": [
+          "Michael Sheen",
+          "David Tennant"
+        ],
+        "mustNotContain": [
+          " & ",
+          "&"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "narrator-lowercase-and-whitespace",
+    "category": "narrator-normalization",
+    "input": {
+      "title": "Project Hail Mary",
+      "subtitle": "A Novel",
+      "narrators": [
+        "  ray porter  "
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "normalize",
+        "shouldContain": [
+          "Ray Porter"
+        ],
+        "mustNotContain": [
+          "  "
+        ]
+      }
+    ]
+  },
+  {
+    "id": "narrator-feat-and-with-prefix",
+    "category": "narrator-normalization",
+    "input": {
+      "title": "Lincoln in the Bardo",
+      "subtitle": "A Novel",
+      "narrators": [
+        "Nick Offerman feat. David Sedaris with Carrie Brownstein"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "normalize",
+        "shouldContain": [
+          "Nick Offerman",
+          "David Sedaris",
+          "Carrie Brownstein"
+        ],
+        "mustNotContain": [
+          "feat.",
+          "feat",
+          "with"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "narrator-slash-semicolon-separators",
+    "category": "narrator-normalization",
+    "input": {
+      "title": "Daisy Jones & The Six",
+      "subtitle": "A Novel",
+      "narrators": [
+        "Jennifer Beals/Benjamin Bratt; Judy Greer / Pablo Schreiber"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "normalize",
+        "shouldContain": [
+          "Jennifer Beals",
+          "Benjamin Bratt",
+          "Judy Greer",
+          "Pablo Schreiber"
+        ],
+        "mustNotContain": [
+          "/",
+          ";"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "narrator-duplicate-name-dedup",
+    "category": "narrator-normalization",
+    "input": {
+      "title": "The Sandman",
+      "subtitle": "Act II",
+      "narrators": [
+        "James McAvoy, Kat Dennings, James McAvoy, Andy Serkis"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "normalize",
+        "shouldContain": [
+          "James McAvoy",
+          "Kat Dennings",
+          "Andy Serkis"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "narrator-trailing-comma-and-and-word",
+    "category": "narrator-normalization",
+    "input": {
+      "title": "The Lord of the Rings",
+      "subtitle": "The Fellowship of the Ring",
+      "narrators": [
+        "Rob Inglis and Andy Serkis,"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "normalize",
+        "shouldContain": [
+          "Rob Inglis",
+          "Andy Serkis"
+        ],
+        "mustNotContain": [
+          " and ",
+          ",,"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "handmaids-tale-apostrophe-title",
+    "category": "mojibake-encoding",
+    "input": {
+      "title": "The Handmaidâ€™s Tale",
+      "subtitle": "A Novel",
+      "narrators": [
+        "Claire Danes"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Handmaid",
+          "Tale"
+        ],
+        "mustNotContain": [
+          "â€™"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "narrator-accent-andre-sogliuzzo",
+    "category": "mojibake-encoding",
+    "input": {
+      "title": "Clear and Present Danger",
+      "subtitle": null,
+      "narrators": [
+        "AndrÃ© Sogliuzzo"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "normalize",
+        "equals": "André Sogliuzzo",
+        "mustNotContain": [
+          "Ã©"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "cien-anos-soledad-enye-title",
+    "category": "mojibake-encoding",
+    "input": {
+      "title": "Cien aÃ±os de soledad",
+      "subtitle": null,
+      "narrators": [
+        "Gustavo Bonfigli"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "años de soledad"
+        ],
+        "mustNotContain": [
+          "Ã±"
+        ]
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "les-miserables-eaccent-title",
+    "category": "mojibake-encoding",
+    "input": {
+      "title": "Les MisÃ©rables",
+      "subtitle": null,
+      "narrators": [
+        "George Guidall"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Misérables"
+        ],
+        "mustNotContain": [
+          "Ã©"
+        ]
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "golden-state-killer-apostrophe-subtitle",
+    "category": "mojibake-encoding",
+    "input": {
+      "title": "I'll Be Gone in the Dark",
+      "subtitle": "One Womanâ€™s Obsessive Search for the Golden State Killer",
+      "narrators": [
+        "Gabra Zackman"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "clean",
+        "shouldContain": [
+          "Woman",
+          "Obsessive Search for the Golden State Killer"
+        ],
+        "mustNotContain": [
+          "â€™"
+        ]
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "man-som-hatar-kvinnor-aumlaut-title",
+    "category": "mojibake-encoding",
+    "input": {
+      "title": "MÃ¤n som hatar kvinnor",
+      "subtitle": "Millennium, Book 1",
+      "narrators": [
+        "Simon Vance"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Män"
+        ],
+        "mustNotContain": [
+          "Ã¤"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "control-11-22-63-date-title",
+    "category": "clean-control",
+    "input": {
+      "title": "11/22/63",
+      "subtitle": "A Novel",
+      "narrators": [
+        "Craig Wasson"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "control-1984-year-title",
+    "category": "clean-control",
+    "input": {
+      "title": "1984",
+      "subtitle": null,
+      "narrators": [
+        "Simon Prebble"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "control-way-of-kings-dual-narrator-series",
+    "category": "clean-control",
+    "input": {
+      "title": "The Way of Kings",
+      "subtitle": "Book One of the Stormlight Archive",
+      "narrators": [
+        "Kate Reading",
+        "Michael Kramer"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "control-world-war-z-full-cast",
+    "category": "clean-control",
+    "input": {
+      "title": "World War Z",
+      "subtitle": "An Oral History of the Zombie War",
+      "narrators": [
+        "Max Brooks",
+        "Alan Alda",
+        "Mark Hamill",
+        "Nathan Fillion",
+        "Common",
+        "Simon Pegg"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "control-sapiens-genuine-subtitle",
+    "category": "clean-control",
+    "input": {
+      "title": "Sapiens",
+      "subtitle": "A Brief History of Humankind",
+      "narrators": [
+        "Derek Perkins"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "control-leviathan-wakes-bracketed-series",
+    "category": "clean-control",
+    "input": {
+      "title": "Leviathan Wakes (The Expanse, Book 1)",
+      "subtitle": null,
+      "narrators": [
+        "Jefferson Mays"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "year-numerals-title-11-22-63",
+    "category": "legit-edge-cases",
+    "input": {
+      "title": "11/22/63",
+      "subtitle": "A Novel",
+      "narrators": [
+        "Craig Wasson"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "number-in-title-fahrenheit-451",
+    "category": "legit-edge-cases",
+    "input": {
+      "title": "Fahrenheit 451",
+      "subtitle": "A Novel",
+      "narrators": [
+        "Tim Robbins"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "colon-numeral-title-2001-space-odyssey",
+    "category": "legit-edge-cases",
+    "input": {
+      "title": "2001: A Space Odyssey",
+      "subtitle": null,
+      "narrators": [
+        "Dick Hill"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "full-cast-multi-narrator-daisy-jones",
+    "category": "legit-edge-cases",
+    "input": {
+      "title": "Daisy Jones & The Six",
+      "subtitle": "A Novel",
+      "narrators": [
+        "Jennifer Beals",
+        "Benjamin Bratt",
+        "Judy Greer",
+        "Pablo Schreiber",
+        "Ari Graynor",
+        "Holter Graham",
+        "Henry Garrett"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "genuine-long-subtitle-slaughterhouse-five",
+    "category": "legit-edge-cases",
+    "input": {
+      "title": "Slaughterhouse-Five",
+      "subtitle": "The Children's Crusade: A Duty-Dance with Death",
+      "narrators": [
+        "Ethan Hawke"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "promo-looking-real-subtitle-pride-prejudice-zombies",
+    "category": "legit-edge-cases",
+    "input": {
+      "title": "Pride and Prejudice and Zombies",
+      "subtitle": "The Classic Regency Romance - Now with Ultraviolent Zombie Mayhem!",
+      "narrators": [
+        "Katherine Kellgren"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "title-volume-bitrate-cruft",
+    "category": "series-and-volume",
+    "input": {
+      "title": "The Way of Kings - Book 01 - 128kbps",
+      "subtitle": null,
+      "narrators": [
+        "Michael Kramer",
+        "Kate Reading"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "The Way of Kings"
+        ],
+        "mustNotContain": [
+          "128kbps",
+          "book 01",
+          "- book"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "subtitle-legit-series-position",
+    "category": "series-and-volume",
+    "input": {
+      "title": "Leviathan Wakes",
+      "subtitle": "Book One of The Expanse",
+      "narrators": [
+        "Jefferson Mays"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "title-sequel-number-keep",
+    "category": "series-and-volume",
+    "input": {
+      "title": "Ready Player Two",
+      "subtitle": null,
+      "narrators": [
+        "Wil Wheaton"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "title-series-tag-and-format-cruft",
+    "category": "series-and-volume",
+    "input": {
+      "title": "Words of Radiance - The Stormlight Archive, Book 2 (Unabridged)",
+      "subtitle": null,
+      "narrators": [
+        "Kate Reading",
+        "Michael Kramer"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Words of Radiance"
+        ],
+        "mustNotContain": [
+          "unabridged",
+          "stormlight",
+          "book 2",
+          "(",
+          ")"
+        ]
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "subtitle-series-with-format-cruft",
+    "category": "series-and-volume",
+    "input": {
+      "title": "A Game of Thrones",
+      "subtitle": "A Song of Ice and Fire, Book 1 (Unabridged) 64kbps",
+      "narrators": [
+        "Roy Dotrice"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "clean",
+        "shouldContain": [
+          "A Song of Ice and Fire"
+        ],
+        "mustNotContain": [
+          "64kbps",
+          "unabridged",
+          "(",
+          ")"
+        ]
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "title-volume-act-fullcast-keep",
+    "category": "series-and-volume",
+    "input": {
+      "title": "The Sandman: Act II",
+      "subtitle": null,
+      "narrators": [
+        "James McAvoy",
+        "Kat Dennings",
+        "Riz Ahmed",
+        "Kristen Schaal"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "subtitle",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
     ]
   }
 ]
