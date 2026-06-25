@@ -18,6 +18,8 @@ const { scoreCase, aggregate } = require('./score')
 
 const baseUrl = process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434'
 const model = process.argv[2] || process.env.OLLAMA_MODEL || 'qwen2.5:7b'
+// OLLAMA_THINK=true|false overrides the adapter's think default (for comparing reasoning on/off)
+const think = process.env.OLLAMA_THINK === undefined ? undefined : process.env.OLLAMA_THINK === 'true'
 const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'cases.json'), 'utf8'))
 
 ;(async () => {
@@ -29,7 +31,7 @@ const cases = JSON.parse(fs.readFileSync(path.join(__dirname, 'cases.json'), 'ut
     let suggestions = []
     let err = null
     try {
-      suggestions = await adapter.getSuggestions({ baseUrl, model, fields: c.input })
+      suggestions = await adapter.getSuggestions({ baseUrl, model, fields: c.input, think })
     } catch (e) {
       err = e.message
     }

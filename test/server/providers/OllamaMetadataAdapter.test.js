@@ -21,19 +21,20 @@ describe('OllamaMetadataAdapter', () => {
       expect(body.messages[1].content).to.include('The Hobbit')
     })
 
-    it('defaults to deterministic sampling (temperature 0) with thinking disabled', () => {
+    it('defaults to deterministic sampling (temperature 0) and leaves thinking to the model', () => {
       const body = adapter.buildRequest('qwen3:14b', { narrators: [] })
-      expect(body.think).to.equal(false)
+      expect(body).to.not.have.property('think') // omitted by default -> model's natural behavior
       expect(body.options.temperature).to.equal(0)
       expect(body.options.num_ctx).to.equal(4096)
     })
 
     it('allows think and options overrides', () => {
-      const body = adapter.buildRequest('qwen3:14b', { narrators: [] }, { think: true, options: { temperature: 0.7 } })
-      expect(body.think).to.equal(true)
-      expect(body.options.temperature).to.equal(0.7)
-      // unspecified option keys keep their defaults
-      expect(body.options.num_ctx).to.equal(4096)
+      const on = adapter.buildRequest('qwen3:14b', { narrators: [] }, { think: true, options: { temperature: 0.7 } })
+      expect(on.think).to.equal(true)
+      expect(on.options.temperature).to.equal(0.7)
+      expect(on.options.num_ctx).to.equal(4096) // unspecified keys keep defaults
+      const off = adapter.buildRequest('qwen3:14b', { narrators: [] }, { think: false })
+      expect(off.think).to.equal(false)
     })
 
     it('coerces a single narrator string into an array in the prompt', () => {

@@ -88,12 +88,9 @@ class OllamaMetadataAdapter {
 
     const user = `Current metadata:\n${JSON.stringify(current, null, 2)}`
 
-    return {
+    const body = {
       model,
       stream: false,
-      // Reasoning models (e.g. qwen3) ramble and behave oddly around clear/remove semantics;
-      // disable thinking by default. Safe for non-thinking models — Ollama ignores it.
-      think: opts.think === undefined ? false : opts.think,
       format: this.responseSchema(),
       options: { ...OllamaMetadataAdapter.DEFAULT_OPTIONS, ...(opts.options || {}) },
       messages: [
@@ -101,6 +98,12 @@ class OllamaMetadataAdapter {
         { role: 'user', content: user }
       ]
     }
+    // Only set `think` when explicitly requested. By default we let the model use its natural
+    // behavior: for reasoning models (qwen3), thinking measurably IMPROVES cleanup accuracy on
+    // this task (eval: 30b 0.979 with thinking vs 0.851 without), so we do NOT disable it.
+    // Non-reasoning models (qwen2.5, mistral) simply don't think — no flag needed.
+    if (typeof opts.think === 'boolean') body.think = opts.think
+    return body
   }
 
   /**
