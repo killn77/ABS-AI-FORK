@@ -1,7 +1,7 @@
 const Logger = require('../Logger')
 const Database = require('../Database')
 const SocketAuthority = require('../SocketAuthority')
-const { getDuplicateSubtitleCandidate } = require('../utils/aiCleanupRules')
+const { deterministicSubtitleStage } = require('../utils/curationStages')
 
 class AiLibraryCleanupManager {
   clampLimit(limit, defaultValue = 100) {
@@ -10,7 +10,7 @@ class AiLibraryCleanupManager {
     return Math.min(Math.max(n, 1), 1000)
   }
 
-  buildSummary(candidates) {
+  buildSummary(candidates, stats = null) {
     const groupsByType = {}
     for (const candidate of candidates || []) {
       if (!groupsByType[candidate.issueType]) {
@@ -35,23 +35,30 @@ class AiLibraryCleanupManager {
       }
     }
 
-    return {
-      total: candidates.length,
+    const summary = {
+      total: (candidates || []).length,
       groups: Object.values(groupsByType)
     }
+    if (stats) summary.stageStats = stats
+    return summary
   }
 
-  extractCandidateFromItem(libraryItem) {
+  runSubtitleStage(libraryItem) {
     if (!libraryItem?.isBook && libraryItem?.mediaType !== 'book') return null
     const media = libraryItem.media || {}
-    const candidate = getDuplicateSubtitleCandidate({
+    return deterministicSubtitleStage({
       libraryItemId: libraryItem.id,
       mediaType: libraryItem.mediaType,
       title: media.title,
       subtitle: media.subtitle
     })
-    if (!candidate) return null
-    candidate.title = media.title || libraryItem.title || ''
+  }
+
+  extractCandidateFromItem(libraryItem) {
+    const result = this.runSubtitleStage(libraryItem)
+    if (!result || result.verdict !== 'accept' || !result.candidate) return null
+    const candidate = result.candidate
+    candidate.title = (libraryItem.media && libraryItem.media.title) || libraryItem.title || ''
     return candidate
   }
 
@@ -66,21 +73,28 @@ class AiLibraryCleanupManager {
     })
 
     const candidates = []
+    const stats = { evaluated: 0, deterministicResolved: 0, escalated: 0 }
     for (const row of rows) {
       const item = await Database.libraryItemModel.getExpandedById(row.id)
+      const result = this.runSubtitleStage(item)
+      if (!result) continue
+      stats.evaluated++
+      if (result.verdict === 'accept') stats.deterministicResolved++
+      else if (result.verdict === 'escalate') stats.escalated++
+
       const candidate = this.extractCandidateFromItem(item)
       if (candidate && (!issueTypes || issueTypes.includes(candidate.issueType))) candidates.push(candidate)
     }
-    return candidates
+    return { candidates, stats }
   }
 
   async getCleanupSummary(libraryId, opts = {}) {
-    const candidates = await this.findCandidatesForLibrary(libraryId, opts)
-    return this.buildSummary(candidates)
+    const { candidates, stats } = await this.findCandidatesForLibrary(libraryId, opts)
+    return this.buildSummary(candidates, stats)
   }
 
   async createSuggestionsForLibrary(libraryId, opts = {}) {
-    const candidates = await this.findCandidatesForLibrary(libraryId, opts)
+    const { candidates } = await this.findCandidatesForLibrary(libraryId, opts)
     const rows = []
 
     for (const candidate of candidates) {
@@ -149,7 +163,7 @@ class AiLibraryCleanupManager {
       throw new Error('Bulk cleanup apply requires confirmApply=true')
     }
 
-    const candidates = await this.findCandidatesForLibrary(libraryId, opts)
+    const { candidates } = await this.findCandidatesForLibrary(libraryId, opts)
     const result = { candidates: candidates.length, applied: 0, skipped: 0, failed: 0, errors: [] }
 
     for (const candidate of candidates) {

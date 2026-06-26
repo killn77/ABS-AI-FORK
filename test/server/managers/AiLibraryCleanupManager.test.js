@@ -42,4 +42,28 @@ describe('AiLibraryCleanupManager', () => {
       expect(AiLibraryCleanupManager.valuesMatch('A', 'A')).to.equal(true)
     })
   })
+
+  describe('runSubtitleStage', () => {
+    it('returns a subtitle-cruft accept for a whole-cruft subtitle book item', () => {
+      const result = AiLibraryCleanupManager.runSubtitleStage({ id: '1', mediaType: 'book', isBook: true, media: { title: 'Dune', subtitle: 'Unabridged' } })
+      expect(result.verdict).to.equal('accept')
+      expect(result.candidate.issueType).to.equal('subtitle-cruft')
+    })
+
+    it('escalates a partial-cruft subtitle book item', () => {
+      const result = AiLibraryCleanupManager.runSubtitleStage({ id: '1', mediaType: 'book', isBook: true, media: { title: 'Dune', subtitle: 'A Novel [Unabridged]' } })
+      expect(result.verdict).to.equal('escalate')
+    })
+
+    it('returns null for non-book items', () => {
+      expect(AiLibraryCleanupManager.runSubtitleStage({ id: '1', mediaType: 'podcast', media: {} })).to.equal(null)
+    })
+  })
+
+  describe('buildSummary with stageStats', () => {
+    it('merges stage stats onto the summary when provided', () => {
+      const summary = AiLibraryCleanupManager.buildSummary([], { evaluated: 8, deterministicResolved: 2, escalated: 6 })
+      expect(summary.stageStats).to.deep.equal({ evaluated: 8, deterministicResolved: 2, escalated: 6 })
+    })
+  })
 })
