@@ -1,5 +1,5 @@
 const { expect } = require('chai')
-const { normalizeTextForCleanup, buildSourceHash, getDuplicateSubtitleCandidate } = require('../../../server/utils/aiCleanupRules')
+const { normalizeTextForCleanup, buildSourceHash, getDuplicateSubtitleCandidate, getSubtitleCruftCandidate, stripCruftTokens, SUBTITLE_CRUFT_REGEX } = require('../../../server/utils/aiCleanupRules')
 
 describe('aiCleanupRules', () => {
   describe('normalizeTextForCleanup', () => {
@@ -66,6 +66,64 @@ describe('aiCleanupRules', () => {
       expect(getDuplicateSubtitleCandidate({ title: 'Dune', subtitle: '' })).to.equal(null)
       expect(getDuplicateSubtitleCandidate({ title: 'Dune', subtitle: 'Book One' })).to.equal(null)
       expect(getDuplicateSubtitleCandidate({ title: '', subtitle: 'Dune' })).to.equal(null)
+    })
+  })
+
+  describe('stripCruftTokens', () => {
+    it('removes cruft tokens, brackets, and collapses whitespace', () => {
+      expect(stripCruftTokens('Unabridged')).to.equal('')
+      expect(stripCruftTokens('MP3 128kbps')).to.equal('')
+      expect(stripCruftTokens('[Dramatized]')).to.equal('')
+      expect(stripCruftTokens('A Novel [Unabridged]')).to.equal('A Novel')
+    })
+
+    it('returns an empty string for non-string values', () => {
+      expect(stripCruftTokens(null)).to.equal('')
+      expect(stripCruftTokens(42)).to.equal('')
+    })
+  })
+
+  describe('getSubtitleCruftCandidate', () => {
+    it('fires a fast-applicable clear for whole-cruft subtitles', () => {
+      const candidate = getSubtitleCruftCandidate({
+        libraryItemId: 'item-1',
+        mediaType: 'book',
+        title: 'Project Hail Mary',
+        subtitle: 'Unabridged'
+      })
+
+      expect(candidate).to.deep.include({
+        libraryItemId: 'item-1',
+        mediaType: 'book',
+        issueType: 'subtitle-cruft',
+        origin: 'deterministic-rule',
+        fieldName: 'subtitle',
+        currentValue: 'Unabridged',
+        proposedValue: '',
+        confidence: 1,
+        canFastApply: true
+      })
+      expect(candidate.rationale).to.equal('Subtitle contains only format or quality cruft and can be cleared.')
+      expect(candidate.sourceHash).to.be.a('string').with.length(40)
+    })
+
+    it('fires for bitrate and bracketed format cruft', () => {
+      expect(getSubtitleCruftCandidate({ title: 'Dune', subtitle: 'MP3 128kbps' })).to.not.equal(null)
+      expect(getSubtitleCruftCandidate({ title: 'Dune', subtitle: '[Dramatized]' })).to.not.equal(null)
+    })
+
+    it('skips partial-cruft subtitles that retain real information', () => {
+      expect(getSubtitleCruftCandidate({ title: 'Dune', subtitle: 'A Novel [Unabridged]' })).to.equal(null)
+    })
+
+    it('defers to duplicate-subtitle when the subtitle duplicates the title', () => {
+      expect(getSubtitleCruftCandidate({ title: 'Unabridged', subtitle: 'Unabridged' })).to.equal(null)
+    })
+
+    it('skips clean, empty, and non-cruft subtitles', () => {
+      expect(getSubtitleCruftCandidate({ title: 'Dune', subtitle: 'Book One' })).to.equal(null)
+      expect(getSubtitleCruftCandidate({ title: 'Dune', subtitle: '' })).to.equal(null)
+      expect(getSubtitleCruftCandidate({ title: 'Dune', subtitle: '   ' })).to.equal(null)
     })
   })
 })
