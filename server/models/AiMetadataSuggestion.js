@@ -33,6 +33,12 @@ class AiMetadataSuggestion extends Model {
     this.rationale
     /** @type {string} hash of source fields, for staleness detection */
     this.sourceHash
+    /** @type {string} cleanup grouping key, e.g. 'duplicate-subtitle' */
+    this.issueType
+    /** @type {string} 'llm' | 'deterministic-rule' */
+    this.origin
+    /** @type {boolean} true when safe for confirmed bulk apply */
+    this.canFastApply
     /** @type {string} 'pending' | 'accepted' | 'rejected' */
     this.status
     /** @type {Date} */
@@ -81,6 +87,13 @@ class AiMetadataSuggestion extends Model {
         confidence: DataTypes.FLOAT,
         rationale: DataTypes.TEXT,
         sourceHash: DataTypes.STRING,
+        issueType: DataTypes.STRING,
+        origin: DataTypes.STRING,
+        canFastApply: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: false
+        },
         status: {
           type: DataTypes.STRING,
           allowNull: false,
