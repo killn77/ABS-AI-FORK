@@ -1,5 +1,6 @@
 const Logger = require('../Logger')
 const AiCurationManager = require('../managers/AiCurationManager')
+const AiLibraryCleanupManager = require('../managers/AiLibraryCleanupManager')
 
 /**
  * @typedef {import('express').Request & { user: import('../models/User'), libraryItem: import('../models/LibraryItem') }} RequestWithUser
@@ -87,6 +88,46 @@ class AiController {
       Logger.error(`[AiController] Failed to generate library suggestions for "${req.params.id}"`, error.message)
       if (error.message === 'AI curation is disabled') return res.status(403).send(error.message)
       res.status(500).send('Failed to generate library AI suggestions')
+    }
+  }
+
+  /**
+   * GET /api/libraries/:id/ai-cleanup/summary
+   * Summarize deterministic cleanup candidates across a library.
+   * Access is enforced by LibraryController.middleware.
+   *
+   * @param {RequestWithUser} req
+   * @param {import('express').Response} res
+   */
+  async getCleanupSummary(req, res) {
+    try {
+      const summary = await AiLibraryCleanupManager.getCleanupSummary(req.library.id, req.query || {})
+      res.json(summary)
+    } catch (error) {
+      Logger.error(`[AiController] Failed to get cleanup summary for "${req.params.id}"`, error.message)
+      res.status(500).send('Failed to get AI cleanup summary')
+    }
+  }
+
+  /**
+   * POST /api/libraries/:id/ai-cleanup/suggestions
+   * Convert deterministic cleanup candidates into reviewable suggestions.
+   * Access is enforced by LibraryController.middleware; canUpdate is checked here.
+   *
+   * @param {RequestWithUser} req
+   * @param {import('express').Response} res
+   */
+  async createCleanupSuggestions(req, res) {
+    if (!req.user.canUpdate) {
+      Logger.warn(`[AiController] User "${req.user.username}" attempted cleanup suggestion creation without permission`)
+      return res.sendStatus(403)
+    }
+    try {
+      const result = await AiLibraryCleanupManager.createSuggestionsForLibrary(req.library.id, req.body || {})
+      res.json(result)
+    } catch (error) {
+      Logger.error(`[AiController] Failed to create cleanup suggestions for "${req.params.id}"`, error.message)
+      res.status(500).send('Failed to create AI cleanup suggestions')
     }
   }
 

@@ -77,6 +77,8 @@ class ApiRouter {
     // AI metadata curation (fork M1) - bulk inbox + bounded batch generation
     this.router.get('/libraries/:id/ai-suggestions', LibraryController.middleware.bind(this), AiController.getLibrarySuggestions.bind(this))
     this.router.post('/libraries/:id/ai-suggestions/generate', LibraryController.middleware.bind(this), AiController.generateLibrarySuggestions.bind(this))
+    this.router.get('/libraries/:id/ai-cleanup/summary', LibraryController.middleware.bind(this), AiController.getCleanupSummary.bind(this))
+    this.router.post('/libraries/:id/ai-cleanup/suggestions', LibraryController.middleware.bind(this), AiController.createCleanupSuggestions.bind(this))
     this.router.delete('/libraries/:id/issues', LibraryController.middleware.bind(this), LibraryController.removeLibraryItemsWithIssues.bind(this))
     this.router.get('/libraries/:id/episode-downloads', LibraryController.middleware.bind(this), LibraryController.getEpisodeDownloadQueue.bind(this))
     this.router.get('/libraries/:id/series', LibraryController.middleware.bind(this), LibraryController.getAllSeriesForLibrary.bind(this))
