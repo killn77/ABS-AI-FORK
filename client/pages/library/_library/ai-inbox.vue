@@ -9,6 +9,32 @@
           <ui-btn :loading="generating" @click="generateBatch">{{ $strings.ButtonGenerateAiSuggestions }}</ui-btn>
         </div>
 
+        <div class="mb-6 bg-primary/40 rounded p-4 border border-white/10">
+          <div class="flex items-center flex-wrap gap-2">
+            <h2 class="text-lg font-semibold">{{ $strings.HeaderAiCleanupHarvest }}</h2>
+            <div class="grow" />
+            <span v-if="duplicateSubtitleGroup" class="text-sm text-gray-300">
+              {{ $strings.LabelAiCleanupDuplicateSubtitle }}: {{ duplicateSubtitleGroup.count }}
+            </span>
+          </div>
+
+          <div v-if="loadingCleanup" class="text-sm text-gray-400 mt-3">...</div>
+          <div v-else-if="!duplicateSubtitleGroup" class="text-sm text-gray-400 mt-3">
+            {{ $strings.MessageAiCleanupHarvestEmpty }}
+          </div>
+          <div v-else class="mt-3">
+            <div class="space-y-1 mb-3">
+              <p v-for="example in duplicateSubtitleGroup.examples.slice(0, 3)" :key="example.libraryItemId" class="text-xs text-gray-400 truncate">
+                {{ example.title }} -> {{ displayValue(example.currentValue) }} -> {{ displayValue(example.proposedValue) }}
+              </p>
+            </div>
+            <div class="flex justify-end gap-2">
+              <ui-btn small :loading="creatingCleanupSuggestions" :disabled="applyingCleanup" @click="createCleanupSuggestions">{{ $strings.ButtonAiCleanupReviewFirst }}</ui-btn>
+              <ui-btn small color="success" :loading="applyingCleanup" :disabled="creatingCleanupSuggestions" @click="applyCleanup">{{ $strings.ButtonAiCleanupApplyAll }}</ui-btn>
+            </div>
+          </div>
+        </div>
+
         <div v-if="loading" class="py-10 text-center text-gray-300">...</div>
 
         <div v-else-if="!suggestions.length" class="py-10 text-center text-gray-400">
@@ -56,8 +82,12 @@ export default {
   data() {
     return {
       suggestions: [],
+      cleanupSummary: null,
       loading: false,
+      loadingCleanup: false,
       generating: false,
+      creatingCleanupSuggestions: false,
+      applyingCleanup: false,
       busyId: null
     }
   },
@@ -67,11 +97,17 @@ export default {
     },
     currentLibraryId() {
       return this.$store.state.libraries.currentLibraryId
+    },
+    duplicateSubtitleGroup() {
+      return this.cleanupSummary?.groups?.find((g) => g.issueType === 'duplicate-subtitle') || null
     }
   },
   watch: {
     currentLibraryId(newVal) {
-      if (newVal) this.loadInbox()
+      if (newVal) {
+        this.loadInbox()
+        this.loadCleanupSummary()
+      }
     }
   },
   methods: {
@@ -90,6 +126,16 @@ export default {
       this.suggestions = data?.suggestions || []
       this.loading = false
     },
+    async loadCleanupSummary() {
+      if (!this.currentLibraryId) return
+      this.loadingCleanup = true
+      const data = await this.$axios.$get(`/api/libraries/${this.currentLibraryId}/ai-cleanup/summary`).catch((error) => {
+        console.error('Failed to load cleanup summary', error)
+        return null
+      })
+      this.cleanupSummary = data
+      this.loadingCleanup = false
+    },
     async generateBatch() {
       if (!this.currentLibraryId) return
       this.generating = true
@@ -101,8 +147,49 @@ export default {
       if (res) {
         this.$toast.success(`Processed ${res.processed} item(s), ${res.suggestionsCreated} suggestion(s)`)
         await this.loadInbox()
+        await this.loadCleanupSummary()
       }
       this.generating = false
+    },
+    async createCleanupSuggestions() {
+      if (!this.currentLibraryId || !this.duplicateSubtitleGroup) return
+      this.creatingCleanupSuggestions = true
+      const res = await this.$axios
+        .$post(`/api/libraries/${this.currentLibraryId}/ai-cleanup/suggestions`, {
+          issueTypes: ['duplicate-subtitle']
+        })
+        .catch((error) => {
+          const msg = error.response?.data || this.$strings.ToastAiSuggestionsFailed
+          this.$toast.error(msg)
+          return null
+        })
+      if (res) {
+        this.$toast.success(`${this.$strings.ToastAiCleanupSuggestionsCreated}: ${res.suggestionsCreated}`)
+        await this.loadInbox()
+        await this.loadCleanupSummary()
+      }
+      this.creatingCleanupSuggestions = false
+    },
+    async applyCleanup() {
+      if (!this.currentLibraryId || !this.duplicateSubtitleGroup) return
+      if (!confirm(this.$strings.ConfirmAiCleanupApplyAll)) return
+      this.applyingCleanup = true
+      const res = await this.$axios
+        .$post(`/api/libraries/${this.currentLibraryId}/ai-cleanup/apply`, {
+          issueTypes: ['duplicate-subtitle'],
+          confirmApply: true
+        })
+        .catch((error) => {
+          const msg = error.response?.data || this.$strings.ToastFailedToUpdate
+          this.$toast.error(msg)
+          return null
+        })
+      if (res) {
+        this.$toast.success(`${this.$strings.ToastAiCleanupApplyComplete}: ${res.applied} applied, ${res.skipped} skipped, ${res.failed} failed`)
+        await this.loadInbox()
+        await this.loadCleanupSummary()
+      }
+      this.applyingCleanup = false
     },
     buildMediaPayload(s) {
       const metadata = {}
@@ -144,6 +231,7 @@ export default {
   },
   mounted() {
     this.loadInbox()
+    this.loadCleanupSummary()
   }
 }
 </script>
