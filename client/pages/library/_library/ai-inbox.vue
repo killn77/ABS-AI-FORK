@@ -9,6 +9,12 @@
           <ui-btn :loading="generating" @click="generateBatch">{{ $strings.ButtonGenerateAiSuggestions }}</ui-btn>
         </div>
 
+        <div class="mb-4 flex flex-wrap gap-2">
+          <span v-for="chip in summaryChips" :key="chip.label" class="text-xs px-2 py-1 rounded border border-white/10 bg-primary/40 text-gray-300">
+            {{ chip.label }}: {{ chip.count }}
+          </span>
+        </div>
+
         <div class="mb-6 bg-primary/40 rounded p-4 border border-white/10">
           <div class="flex items-center flex-wrap gap-2">
             <h2 class="text-lg font-semibold">{{ $strings.HeaderAiCleanupHarvest }}</h2>
@@ -35,28 +41,50 @@
           </div>
         </div>
 
+        <div class="mb-4 flex flex-wrap gap-2">
+          <button
+            v-for="filter in statusFilters"
+            :key="filter.value"
+            class="rounded border px-3 py-1 text-sm"
+            :class="statusFilter === filter.value ? 'bg-success border-success text-white' : 'bg-primary/40 border-white/10 text-gray-300 hover:text-white'"
+            @click="setStatusFilter(filter.value)"
+          >
+            {{ filter.label }} ({{ filter.count }})
+          </button>
+        </div>
+
         <div v-if="loading" class="py-10 text-center text-gray-300">...</div>
 
         <div v-else-if="!suggestions.length" class="py-10 text-center text-gray-400">
-          {{ $strings.MessageNoAiSuggestions }}
+          {{ emptyMessage }}
         </div>
 
         <div v-else class="space-y-3">
           <div v-for="s in suggestions" :key="s.id" class="bg-primary/40 rounded p-3 border border-white/10">
             <div class="flex items-center mb-1 flex-wrap">
               <nuxt-link :to="`/item/${s.libraryItem.id}`" class="font-semibold hover:underline">{{ s.libraryItem.title }}</nuxt-link>
-              <span class="mx-2 text-gray-500">·</span>
+              <span class="mx-2 text-gray-500">-</span>
               <span class="capitalize text-gray-300">{{ s.fieldName }}</span>
               <span v-if="s.confidence != null" class="ml-2 text-xs text-gray-400">{{ Math.round(s.confidence * 100) }}%</span>
+            </div>
+            <div class="mb-2 flex flex-wrap gap-1">
+              <span class="text-xs px-2 py-0.5 rounded border border-white/10 text-gray-300">{{ statusLabel(s.status) }}</span>
+              <span class="text-xs px-2 py-0.5 rounded border border-white/10 text-gray-300">{{ issueTypeLabel(s.issueType) }}</span>
+              <span class="text-xs px-2 py-0.5 rounded border border-white/10 text-gray-300">{{ originLabel(s.origin) }}</span>
+              <span v-if="!s.issueType && !s.origin" class="text-xs px-2 py-0.5 rounded border border-warning/40 text-warning">{{ $strings.LabelAiSuggestionLegacy }}</span>
+              <span v-if="s.canFastApply" class="text-xs px-2 py-0.5 rounded border border-success/40 text-success">{{ $strings.LabelAiSuggestionFastApply }}</span>
             </div>
             <div class="text-sm">
               <p class="text-gray-400"><span class="text-gray-500">{{ $strings.LabelAiSuggestionCurrent }}:</span> {{ displayValue(s.currentValue) }}</p>
               <p class="text-success"><span class="text-gray-500">{{ $strings.LabelAiSuggestionProposed }}:</span> {{ s.proposedValue || '(clear field)' }}</p>
             </div>
             <p v-if="s.rationale" class="text-xs text-gray-400 mt-1 italic">{{ s.rationale }}</p>
-            <div class="flex justify-end mt-2 space-x-2">
+            <div v-if="s.status === 'pending'" class="flex justify-end mt-2 space-x-2">
               <ui-btn small :disabled="busyId === s.id" @click="reject(s)">{{ $strings.ButtonReject }}</ui-btn>
               <ui-btn small color="success" :loading="busyId === s.id" @click="accept(s)">{{ $strings.ButtonAccept }}</ui-btn>
+            </div>
+            <div v-else-if="s.status === 'accepted'" class="flex justify-end mt-2 space-x-2">
+              <ui-btn small :loading="revertingId === s.id" :disabled="busyId === s.id" @click="revert(s)">{{ $strings.ButtonRevert }}</ui-btn>
             </div>
           </div>
         </div>
@@ -82,12 +110,15 @@ export default {
   data() {
     return {
       suggestions: [],
+      suggestionSummary: null,
       cleanupSummary: null,
+      statusFilter: 'pending',
       loading: false,
       loadingCleanup: false,
       generating: false,
       creatingCleanupSuggestions: false,
       applyingCleanup: false,
+      revertingId: null,
       busyId: null
     }
   },
@@ -100,11 +131,37 @@ export default {
     },
     duplicateSubtitleGroup() {
       return this.cleanupSummary?.groups?.find((g) => g.issueType === 'duplicate-subtitle') || null
+    },
+    statusFilters() {
+      const counts = this.suggestionSummary?.byStatus || {}
+      return [
+        { value: 'pending', label: this.$strings.LabelAiSuggestionPending, count: counts.pending || 0 },
+        { value: 'accepted', label: this.$strings.LabelAiSuggestionAccepted, count: counts.accepted || 0 },
+        { value: 'rejected', label: this.$strings.LabelAiSuggestionRejected, count: counts.rejected || 0 },
+        { value: 'reverted', label: this.$strings.LabelAiSuggestionReverted, count: counts.reverted || 0 },
+        { value: 'all', label: this.$strings.LabelAiSuggestionAll, count: this.suggestionSummary?.total || 0 }
+      ]
+    },
+    summaryChips() {
+      const counts = this.suggestionSummary?.byStatus || {}
+      return [
+        { label: this.$strings.LabelAiSuggestionPending, count: counts.pending || 0 },
+        { label: this.$strings.LabelAiSuggestionAccepted, count: counts.accepted || 0 },
+        { label: this.$strings.LabelAiSuggestionRejected, count: counts.rejected || 0 },
+        { label: this.$strings.LabelAiSuggestionReverted, count: counts.reverted || 0 },
+        { label: this.$strings.LabelAiSuggestionDeterministic, count: this.suggestionSummary?.deterministic || 0 },
+        { label: this.$strings.LabelAiSuggestionLegacy, count: this.suggestionSummary?.legacy || 0 }
+      ]
+    },
+    emptyMessage() {
+      if (this.statusFilter === 'pending') return this.$strings.MessageNoAiSuggestions
+      return this.$strings.MessageNoAiSuggestionsForFilter
     }
   },
   watch: {
     currentLibraryId(newVal) {
       if (newVal) {
+        this.loadSuggestionSummary()
         this.loadInbox()
         this.loadCleanupSummary()
       }
@@ -113,18 +170,49 @@ export default {
   methods: {
     displayValue(value) {
       if (Array.isArray(value)) return value.join(', ')
-      if (value === null || value === undefined || value === '') return '—'
+      if (value === null || value === undefined || value === '') return '-'
       return value
+    },
+    statusLabel(status) {
+      const labels = {
+        pending: this.$strings.LabelAiSuggestionPending,
+        accepted: this.$strings.LabelAiSuggestionAccepted,
+        rejected: this.$strings.LabelAiSuggestionRejected,
+        reverted: this.$strings.LabelAiSuggestionReverted
+      }
+      return labels[status] || status || this.$strings.LabelAiSuggestionPending
+    },
+    issueTypeLabel(issueType) {
+      if (issueType === 'duplicate-subtitle') return this.$strings.LabelAiCleanupDuplicateSubtitle
+      return issueType || this.$strings.LabelAiSuggestionLegacy
+    },
+    originLabel(origin) {
+      if (origin === 'deterministic-rule') return this.$strings.LabelAiSuggestionDeterministic
+      if (origin === 'llm') return this.$strings.LabelAiSuggestionLlm
+      return origin || this.$strings.LabelAiSuggestionLegacy
+    },
+    async setStatusFilter(status) {
+      if (this.statusFilter === status) return
+      this.statusFilter = status
+      await this.loadInbox()
     },
     async loadInbox() {
       if (!this.currentLibraryId) return
       this.loading = true
-      const data = await this.$axios.$get(`/api/libraries/${this.currentLibraryId}/ai-suggestions`).catch((error) => {
+      const data = await this.$axios.$get(`/api/libraries/${this.currentLibraryId}/ai-suggestions`, { params: { status: this.statusFilter } }).catch((error) => {
         console.error('Failed to load AI inbox', error)
         return null
       })
       this.suggestions = data?.suggestions || []
       this.loading = false
+    },
+    async loadSuggestionSummary() {
+      if (!this.currentLibraryId) return
+      const data = await this.$axios.$get(`/api/libraries/${this.currentLibraryId}/ai-suggestions/summary`).catch((error) => {
+        console.error('Failed to load AI suggestion summary', error)
+        return null
+      })
+      this.suggestionSummary = data
     },
     async loadCleanupSummary() {
       if (!this.currentLibraryId) return
@@ -146,8 +234,7 @@ export default {
       })
       if (res) {
         this.$toast.success(`Processed ${res.processed} item(s), ${res.suggestionsCreated} suggestion(s)`)
-        await this.loadInbox()
-        await this.loadCleanupSummary()
+        await this.refreshInboxData()
       }
       this.generating = false
     },
@@ -165,8 +252,7 @@ export default {
         })
       if (res) {
         this.$toast.success(`${this.$strings.ToastAiCleanupSuggestionsCreated}: ${res.suggestionsCreated}`)
-        await this.loadInbox()
-        await this.loadCleanupSummary()
+        await this.refreshInboxData()
       }
       this.creatingCleanupSuggestions = false
     },
@@ -186,8 +272,7 @@ export default {
         })
       if (res) {
         this.$toast.success(`${this.$strings.ToastAiCleanupApplyComplete}: ${res.applied} applied, ${res.skipped} skipped, ${res.failed} failed`)
-        await this.loadInbox()
-        await this.loadCleanupSummary()
+        await this.refreshInboxData()
       }
       this.applyingCleanup = false
     },
@@ -221,17 +306,33 @@ export default {
       await this.recordDecision(s, 'reject')
       this.busyId = null
     },
+    async revert(s) {
+      this.revertingId = s.id
+      const res = await this.$axios.$post(`/api/ai-suggestions/${s.id}/revert`).catch((error) => {
+        const msg = error.response?.data || this.$strings.ToastFailedToUpdate
+        this.$toast.error(msg)
+        return null
+      })
+      if (res) {
+        this.$toast.success(this.$strings.ToastAiSuggestionReverted)
+        await this.refreshInboxData()
+      }
+      this.revertingId = null
+    },
     async recordDecision(s, decision) {
       await this.$axios.$post(`/api/ai-suggestions/${s.id}/decision`, { decision }).catch((error) => {
         console.error('Failed to record decision', error)
       })
-      // Remove the resolved suggestion from the inbox
-      this.suggestions = this.suggestions.filter((x) => x.id !== s.id)
+      await this.refreshInboxData()
+    },
+    async refreshInboxData() {
+      await this.loadSuggestionSummary()
+      await this.loadInbox()
+      await this.loadCleanupSummary()
     }
   },
   mounted() {
-    this.loadInbox()
-    this.loadCleanupSummary()
+    this.refreshInboxData()
   }
 }
 </script>

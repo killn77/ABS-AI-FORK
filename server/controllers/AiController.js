@@ -60,11 +60,29 @@ class AiController {
    */
   async getLibrarySuggestions(req, res) {
     try {
-      const suggestions = await AiCurationManager.getPendingSuggestionsForLibrary(req.library.id)
+      const suggestions = await AiCurationManager.getSuggestionsForLibrary(req.library.id, req.query || {})
       res.json({ suggestions })
     } catch (error) {
       Logger.error(`[AiController] Failed to get library suggestions for "${req.params.id}"`, error.message)
       res.status(500).send('Failed to get library AI suggestions')
+    }
+  }
+
+  /**
+   * GET /api/libraries/:id/ai-suggestions/summary
+   * Compact counts for the bulk curation inbox.
+   * Access is enforced by LibraryController.middleware.
+   *
+   * @param {RequestWithUser} req
+   * @param {import('express').Response} res
+   */
+  async getLibrarySuggestionSummary(req, res) {
+    try {
+      const summary = await AiCurationManager.getSuggestionSummaryForLibrary(req.library.id)
+      res.json(summary)
+    } catch (error) {
+      Logger.error(`[AiController] Failed to get library suggestion summary for "${req.params.id}"`, error.message)
+      res.status(500).send('Failed to get library AI suggestion summary')
     }
   }
 

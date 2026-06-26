@@ -17,6 +17,10 @@ class AiCurationManager {
     this.adapter = new OllamaMetadataAdapter()
   }
 
+  get validSuggestionStatuses() {
+    return ['pending', 'accepted', 'rejected', 'reverted']
+  }
+
   get settings() {
     return Database.serverSettings
   }
@@ -114,14 +118,71 @@ class AiCurationManager {
   }
 
   /**
-   * The bulk curation inbox: all pending suggestions across one library, newest first,
+   * Normalize library inbox filters while preserving the historical pending-only default.
+   * @param {Object} query
+   * @returns {{ status: string, issueType: string|null, origin: string|null }}
+   */
+  normalizeSuggestionFilters(query = {}) {
+    const rawStatus = typeof query.status === 'string' ? query.status.trim().toLowerCase() : 'pending'
+    const status = rawStatus === 'all' || this.validSuggestionStatuses.includes(rawStatus) ? rawStatus : 'pending'
+    const issueType = typeof query.issueType === 'string' && query.issueType.trim() ? query.issueType.trim() : null
+    const origin = typeof query.origin === 'string' && query.origin.trim() ? query.origin.trim() : null
+    return { status, issueType, origin }
+  }
+
+  /**
+   * Convert normalized filters into a Sequelize where clause.
+   * @param {{ status: string, issueType: string|null, origin: string|null }} filters
+   * @returns {Object}
+   */
+  buildSuggestionWhere(filters) {
+    const where = {}
+    if (filters.status !== 'all') where.status = filters.status
+    if (filters.issueType) where.issueType = filters.issueType
+    if (filters.origin) where.origin = filters.origin
+    return where
+  }
+
+  /**
+   * Build compact counts for the inbox header.
+   * @param {Array} rows
+   * @returns {{ total: number, byStatus: Object, byIssueType: Object, byOrigin: Object, legacy: number, deterministic: number }}
+   */
+  buildSuggestionSummary(rows) {
+    const summary = {
+      total: rows.length,
+      byStatus: {},
+      byIssueType: {},
+      byOrigin: {},
+      legacy: 0,
+      deterministic: 0
+    }
+
+    for (const row of rows) {
+      const status = row.status || 'pending'
+      const issueType = row.issueType || 'legacy'
+      const origin = row.origin || 'legacy'
+      summary.byStatus[status] = (summary.byStatus[status] || 0) + 1
+      summary.byIssueType[issueType] = (summary.byIssueType[issueType] || 0) + 1
+      summary.byOrigin[origin] = (summary.byOrigin[origin] || 0) + 1
+      if (!row.issueType && !row.origin) summary.legacy++
+      if (row.origin === 'deterministic-rule') summary.deterministic++
+    }
+
+    return summary
+  }
+
+  /**
+   * The bulk curation inbox: filtered suggestions across one library, newest first,
    * each joined to its library item (id/title/mediaType) for display. Fast DB-only read.
    * @param {string} libraryId
+   * @param {Object} [query]
    * @returns {Promise<Array>}
    */
-  async getPendingSuggestionsForLibrary(libraryId) {
+  async getSuggestionsForLibrary(libraryId, query = {}) {
+    const filters = this.normalizeSuggestionFilters(query)
     return Database.aiMetadataSuggestionModel.findAll({
-      where: { status: 'pending' },
+      where: this.buildSuggestionWhere(filters),
       include: [
         {
           model: Database.libraryItemModel,
@@ -132,6 +193,35 @@ class AiCurationManager {
       ],
       order: [['createdAt', 'DESC']]
     })
+  }
+
+  /**
+   * Historical pending-only library inbox helper.
+   * @param {string} libraryId
+   * @returns {Promise<Array>}
+   */
+  async getPendingSuggestionsForLibrary(libraryId) {
+    return this.getSuggestionsForLibrary(libraryId, { status: 'pending' })
+  }
+
+  /**
+   * Summarize all AI suggestion rows that belong to one library.
+   * @param {string} libraryId
+   * @returns {Promise<Object>}
+   */
+  async getSuggestionSummaryForLibrary(libraryId) {
+    const rows = await Database.aiMetadataSuggestionModel.findAll({
+      include: [
+        {
+          model: Database.libraryItemModel,
+          where: { libraryId },
+          required: true,
+          attributes: []
+        }
+      ],
+      order: [['createdAt', 'DESC']]
+    })
+    return this.buildSuggestionSummary(rows)
   }
 
   /**
