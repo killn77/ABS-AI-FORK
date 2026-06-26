@@ -100,3 +100,35 @@ describe('AiCurationManager', () => {
     })
   })
 })
+
+describe('planItemCascade', () => {
+  const bookItem = (title, subtitle, narrators = ['N']) => ({
+    id: 'item-1',
+    mediaType: 'book',
+    isBook: true,
+    media: { title, subtitle, narrators }
+  })
+
+  it('resolves a whole-cruft subtitle deterministically and excludes it from the LLM fields', () => {
+    const plan = AiCurationManager.planItemCascade(bookItem('Project Hail Mary', 'Unabridged'))
+    expect(plan.detCandidate).to.not.equal(null)
+    expect(plan.detCandidate.issueType).to.equal('subtitle-cruft')
+    expect(plan.resolved.has('subtitle')).to.equal(true)
+    expect(plan.llmFields).to.not.have.property('subtitle')
+    expect(plan.llmFields).to.have.property('title')
+    expect(plan.llmFields).to.have.property('narrators')
+  })
+
+  it('leaves a partial-cruft subtitle in the LLM fields (deterministic escalates)', () => {
+    const plan = AiCurationManager.planItemCascade(bookItem('Dune', 'A Novel [Unabridged]'))
+    expect(plan.detCandidate).to.equal(null)
+    expect(plan.resolved.size).to.equal(0)
+    expect(plan.llmFields).to.have.property('subtitle')
+  })
+
+  it('leaves a clean subtitle for the LLM and resolves nothing', () => {
+    const plan = AiCurationManager.planItemCascade(bookItem('Dune', 'Book One'))
+    expect(plan.detCandidate).to.equal(null)
+    expect(plan.llmFields).to.have.property('subtitle')
+  })
+})

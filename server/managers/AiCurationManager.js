@@ -3,6 +3,8 @@ const { Op } = require('sequelize')
 const Logger = require('../Logger')
 const Database = require('../Database')
 const OllamaMetadataAdapter = require('../providers/OllamaMetadataAdapter')
+const { deterministicSubtitleStage } = require('../utils/curationStages')
+const { planLlmFields, dropResolvedDescriptors, hasCuratableField, tagLlmDescriptor } = require('../utils/cascadeBatch')
 
 /**
  * Manager for the review-first AI metadata curation feature (fork M0).
@@ -37,6 +39,31 @@ class AiCurationManager {
       subtitle: media.subtitle ?? null,
       narrators: Array.isArray(media.narrators) ? media.narrators : []
     }
+  }
+
+  /**
+   * Decide, synchronously, what the deterministic stage resolves for an item and which fields
+   * remain for the LLM. Pure of DB/network so it is unit-testable.
+   * @param {import('../models/LibraryItem').LibraryItem} libraryItem
+   * @returns {{ detCandidate: object|null, llmFields: object, resolved: Set<string>, allFields: object }}
+   */
+  planItemCascade(libraryItem) {
+    const media = libraryItem.media || {}
+    const allFields = this.extractFields(libraryItem)
+    const detResult = deterministicSubtitleStage({
+      libraryItemId: libraryItem.id,
+      mediaType: libraryItem.mediaType,
+      title: media.title,
+      subtitle: media.subtitle
+    })
+    const resolved = new Set()
+    let detCandidate = null
+    if (detResult && detResult.verdict === 'accept' && detResult.candidate) {
+      detCandidate = detResult.candidate
+      resolved.add(detCandidate.fieldName)
+    }
+    const llmFields = planLlmFields(allFields, resolved)
+    return { detCandidate, llmFields, resolved, allFields }
   }
 
   /**
@@ -89,20 +116,80 @@ class AiCurationManager {
       descriptors.map((d) => ({
         libraryItemId: libraryItem.id,
         mediaType: libraryItem.mediaType,
-        fieldName: d.fieldName,
-        currentValue: d.currentValue,
-        proposedValue: d.proposedValue,
-        source: d.source,
-        model,
-        confidence: d.confidence ?? null,
-        rationale: d.rationale ?? null,
         sourceHash,
-        status: 'pending'
+        rationale: d.rationale ?? null,
+        status: 'pending',
+        ...tagLlmDescriptor(d, model)
       }))
     )
 
     Logger.info(`[AiCurationManager] Created ${rows.length} suggestion(s) for "${libraryItem.media?.title}"`)
     return rows
+  }
+
+  /**
+   * Run the deterministic->LLM cascade for one book item and persist pending rows.
+   * Clears the item's existing pending rows once, then writes deterministic + tagged LLM rows.
+   * @param {import('../models/LibraryItem').LibraryItem} libraryItem
+   * @returns {Promise<{ suggestionsCreated: number, deterministicResolved: boolean, llmCalled: boolean, rows: Array }>}
+   */
+  async generateCascadeForItem(libraryItem) {
+    const model = this.settings.aiOllamaModel
+    const { detCandidate, llmFields, resolved, allFields } = this.planItemCascade(libraryItem)
+    const sourceHash = this.hashFields(allFields)
+
+    let descriptors = []
+    let llmCalled = false
+    if (hasCuratableField(llmFields)) {
+      llmCalled = true
+      try {
+        const raw = await this.adapter.getSuggestions({ baseUrl: this.settings.aiOllamaBaseUrl, model, fields: llmFields })
+        descriptors = dropResolvedDescriptors(raw, resolved)
+      } catch (error) {
+        Logger.error(`[AiCurationManager] Ollama failed for "${libraryItem.id}"`, error.message)
+        descriptors = []
+      }
+    }
+
+    await Database.aiMetadataSuggestionModel.destroy({
+      where: { libraryItemId: libraryItem.id, status: 'pending' }
+    })
+
+    const rows = []
+    if (detCandidate) {
+      rows.push(
+        await Database.aiMetadataSuggestionModel.create({
+          libraryItemId: libraryItem.id,
+          mediaType: detCandidate.mediaType,
+          fieldName: detCandidate.fieldName,
+          currentValue: detCandidate.currentValue,
+          proposedValue: detCandidate.proposedValue,
+          source: detCandidate.source,
+          model: detCandidate.model,
+          confidence: detCandidate.confidence,
+          rationale: detCandidate.rationale,
+          sourceHash: detCandidate.sourceHash,
+          issueType: detCandidate.issueType,
+          origin: detCandidate.origin,
+          canFastApply: detCandidate.canFastApply,
+          status: 'pending'
+        })
+      )
+    }
+    for (const d of descriptors) {
+      rows.push(
+        await Database.aiMetadataSuggestionModel.create({
+          libraryItemId: libraryItem.id,
+          mediaType: libraryItem.mediaType,
+          sourceHash,
+          rationale: d.rationale ?? null,
+          status: 'pending',
+          ...tagLlmDescriptor(d, model)
+        })
+      )
+    }
+
+    return { suggestionsCreated: rows.length, deterministicResolved: Boolean(detCandidate), llmCalled, rows }
   }
 
   /**
@@ -271,12 +358,16 @@ class AiCurationManager {
 
     let processed = 0
     let suggestionsCreated = 0
+    let deterministicResolved = 0
+    let llmItemsCalled = 0
     for (const row of candidates) {
       const item = await Database.libraryItemModel.getExpandedById(row.id)
       if (!item?.isBook) continue
       try {
-        const rows = await this.generateSuggestionsForItem(item)
-        suggestionsCreated += rows.length
+        const r = await this.generateCascadeForItem(item)
+        suggestionsCreated += r.suggestionsCreated
+        if (r.deterministicResolved) deterministicResolved++
+        if (r.llmCalled) llmItemsCalled++
         processed++
       } catch (error) {
         Logger.error(`[AiCurationManager] Batch item "${row.id}" failed`, error.message)
@@ -284,8 +375,8 @@ class AiCurationManager {
     }
 
     const remaining = await Database.libraryItemModel.count({ where: { libraryId: library.id, mediaType: 'book' } })
-    Logger.info(`[AiCurationManager] Library batch: processed ${processed}, created ${suggestionsCreated} suggestion(s)`)
-    return { processed, suggestionsCreated, remaining }
+    Logger.info(`[AiCurationManager] Library batch: processed ${processed}, deterministic ${deterministicResolved}, llm ${llmItemsCalled}, created ${suggestionsCreated} suggestion(s)`)
+    return { processed, deterministicResolved, llmItemsCalled, suggestionsCreated, remaining }
   }
 
   /**
