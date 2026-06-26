@@ -70,11 +70,15 @@ class OllamaMetadataAdapter {
       '(title, subtitle, narrators). Suggest a cleanup for a field ONLY when it is clearly wrong or polluted. ' +
       'Bias strongly toward leaving fields unchanged — a wrong change is worse than a missed one. ' +
       'If a field is already fine, omit it entirely.\n' +
-      'TITLE / SUBTITLE: remove file-naming and source cruft — bitrate ("128kbps", "320", "64k"), format/container ' +
-      'tags ("MP3", "M4B", "[Unabridged]", "(Dramatized)", "[audiobook]"), track/part-of numbers ("Track 12 of 45"), ' +
-      'and standalone years that appear only as a bracketed or parenthesized tag ("{2017}", "(2021)"). Put the real ' +
-      'title in "value". BUT KEEP numbers, years and punctuation that are genuinely part of the work\'s title — e.g. ' +
-      '"1984", "11/22/63", "Fahrenheit 451", "2001: A Space Odyssey" — do not strip these.\n' +
+      'TITLE / SUBTITLE: remove ONLY true file-naming and source cruft — bitrate ("128kbps", "320", "64k"), ' +
+      'format/container tags ("MP3", "M4B", "FLAC", "[audiobook]"), the redundant default "Unabridged", and a ' +
+      'standalone year that appears only as a bracketed/parenthesized tag ("{2017}", "(2021)"). Put the real title ' +
+      'in "value".\n' +
+      'KEEP anything that carries real meaning, even inside parentheses/brackets: edition type ("Dramatized ' +
+      'Adaptation", "Dramatization", "Abridged"), part/volume structure ("Part 2 of 2", "Volume One"), series names ' +
+      'and numbers ("(Gods of the Game #1)", "Book Two of The Stormlight Archive"), and numbers/years that are part ' +
+      'of the real title ("1984", "11/22/63", "Fahrenheit 451", "2001: A Space Odyssey"). When in doubt, KEEP it and ' +
+      'leave the field unchanged.\n' +
       'SUBTITLE clearing: set "clear": true (and omit "value") for a subtitle ONLY when it is essentially identical ' +
       'to the title (same words, ignoring case/punctuation and a trailing format tag like "Unabridged"). NEVER clear ' +
       'a subtitle that adds real information: a descriptive subtitle ("A Novel", "A Memoir") or a series/volume name ' +

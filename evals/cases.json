@@ -1448,5 +1448,70 @@
         "rule": "none"
       }
     ]
+  },
+  {
+    "id": "keep-edition-part-dramatized",
+    "category": "legit-edge-cases",
+    "input": {
+      "title": "Seven Surrenders (Part 2 of 2) (Dramatized Adaptation)",
+      "subtitle": null,
+      "narrators": [
+        "Full Cast"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "keep-volume-dramatized-tag",
+    "category": "legit-edge-cases",
+    "input": {
+      "title": "White Sand: Volume One [Dramatized Adaptation]",
+      "subtitle": null,
+      "narrators": [
+        "Michael Kramer"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "none"
+      }
+    ]
+  },
+  {
+    "id": "strip-unabridged-keep-series",
+    "category": "file-naming-artifacts",
+    "input": {
+      "title": "The Striker (Gods of the Game #1) (Unabridged)",
+      "subtitle": null,
+      "narrators": [
+        "Cason Murphy"
+      ]
+    },
+    "expect": [
+      {
+        "field": "title",
+        "rule": "clean",
+        "shouldContain": [
+          "Gods of the Game"
+        ],
+        "mustNotContain": [
+          "unabridged"
+        ]
+      },
+      {
+        "field": "narrators",
+        "rule": "none"
+      }
+    ]
   }
 ]
