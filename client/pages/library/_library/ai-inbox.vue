@@ -24,6 +24,12 @@
             </span>
           </div>
 
+          <div v-if="cleanupSummary && cleanupSummary.stageStats" class="text-xs text-gray-300 mt-1">
+            Deterministic resolved {{ cleanupSummary.stageStats.deterministicResolved }} /
+            escalated {{ cleanupSummary.stageStats.escalated }} of
+            {{ cleanupSummary.stageStats.evaluated }} evaluated
+          </div>
+
           <div v-if="loadingCleanup" class="text-sm text-gray-400 mt-3">...</div>
           <div v-else-if="!duplicateSubtitleGroup" class="text-sm text-gray-400 mt-3">
             {{ $strings.MessageAiCleanupHarvestEmpty }}
@@ -184,6 +190,7 @@ export default {
     },
     issueTypeLabel(issueType) {
       if (issueType === 'duplicate-subtitle') return this.$strings.LabelAiCleanupDuplicateSubtitle
+      if (issueType === 'subtitle-cruft') return this.$strings.LabelAiIssueSubtitleCruft
       return issueType || this.$strings.LabelAiSuggestionLegacy
     },
     originLabel(origin) {

@@ -233,6 +233,7 @@
   "LabelAbridged": "Abridged",
   "LabelAbridgedChecked": "Abridged (checked)",
   "LabelAiCleanupDuplicateSubtitle": "Duplicate subtitle",
+  "LabelAiIssueSubtitleCruft": "Subtitle cruft",
   "LabelAiSuggestionAccepted": "Accepted",
   "LabelAiSuggestionAll": "All",
   "LabelAiSuggestionCurrent": "Current",
