@@ -33,7 +33,7 @@ function getDuplicateSubtitleCandidate(input) {
     origin: 'deterministic-rule',
     fieldName: 'subtitle',
     currentValue: subtitle,
-    proposedValue: null,
+    proposedValue: '',
     source: 'deterministic-rule',
     model: null,
     confidence: 1,

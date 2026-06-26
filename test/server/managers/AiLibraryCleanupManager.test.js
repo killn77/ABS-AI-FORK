@@ -15,8 +15,8 @@ describe('AiLibraryCleanupManager', () => {
   describe('buildSummary', () => {
     it('groups duplicate-subtitle candidates with count and examples', () => {
       const summary = AiLibraryCleanupManager.buildSummary([
-        { libraryItemId: '1', title: 'A', issueType: 'duplicate-subtitle', fieldName: 'subtitle', currentValue: 'A', proposedValue: null, canFastApply: true },
-        { libraryItemId: '2', title: 'B', issueType: 'duplicate-subtitle', fieldName: 'subtitle', currentValue: 'B', proposedValue: null, canFastApply: true }
+        { libraryItemId: '1', title: 'A', issueType: 'duplicate-subtitle', fieldName: 'subtitle', currentValue: 'A', proposedValue: '', canFastApply: true },
+        { libraryItemId: '2', title: 'B', issueType: 'duplicate-subtitle', fieldName: 'subtitle', currentValue: 'B', proposedValue: '', canFastApply: true }
       ])
 
       expect(summary.total).to.equal(2)

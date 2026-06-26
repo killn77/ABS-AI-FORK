@@ -42,7 +42,7 @@ describe('aiCleanupRules', () => {
         origin: 'deterministic-rule',
         fieldName: 'subtitle',
         currentValue: 'Project Hail Mary',
-        proposedValue: null,
+        proposedValue: '',
         confidence: 1,
         canFastApply: true
       })
@@ -59,7 +59,7 @@ describe('aiCleanupRules', () => {
       })
 
       expect(candidate).to.not.equal(null)
-      expect(candidate.proposedValue).to.equal(null)
+      expect(candidate.proposedValue).to.equal('')
     })
 
     it('returns null when subtitle is empty or informative', () => {
