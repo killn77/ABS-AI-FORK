@@ -196,6 +196,7 @@ export default {
     originLabel(origin) {
       if (origin === 'deterministic-rule') return this.$strings.LabelAiSuggestionDeterministic
       if (origin === 'llm') return this.$strings.LabelAiSuggestionLlm
+      if (origin === 'local-llm') return this.$strings.LabelAiOriginLocalLlm
       return origin || this.$strings.LabelAiSuggestionLegacy
     },
     async setStatusFilter(status) {
@@ -240,7 +241,8 @@ export default {
         return null
       })
       if (res) {
-        this.$toast.success(`Processed ${res.processed} item(s), ${res.suggestionsCreated} suggestion(s)`)
+        const detCounts = res.deterministicResolved != null ? ` (deterministic ${res.deterministicResolved} / llm ${res.llmItemsCalled} of ${res.processed})` : ''
+        this.$toast.success(`Processed ${res.processed} item(s), ${res.suggestionsCreated} suggestion(s)${detCounts}`)
         await this.refreshInboxData()
       }
       this.generating = false
