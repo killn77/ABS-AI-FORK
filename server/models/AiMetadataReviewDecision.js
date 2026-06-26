@@ -27,7 +27,8 @@ class AiMetadataReviewDecision extends Model {
   static DECISION = {
     ACCEPT: 'accept',
     REJECT: 'reject',
-    EDIT: 'edit'
+    EDIT: 'edit',
+    REVERT: 'revert'
   }
 
   /**

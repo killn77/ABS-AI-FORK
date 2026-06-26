@@ -29,4 +29,17 @@ describe('AiLibraryCleanupManager', () => {
       expect(summary.groups[0].examples).to.have.length(2)
     })
   })
+
+  describe('valuesMatch', () => {
+    it('treats empty string, null, and undefined as equivalent clears', () => {
+      expect(AiLibraryCleanupManager.valuesMatch('', null)).to.equal(true)
+      expect(AiLibraryCleanupManager.valuesMatch(null, undefined)).to.equal(true)
+      expect(AiLibraryCleanupManager.valuesMatch(undefined, '')).to.equal(true)
+    })
+
+    it('does not treat different populated strings as matching', () => {
+      expect(AiLibraryCleanupManager.valuesMatch('A', 'B')).to.equal(false)
+      expect(AiLibraryCleanupManager.valuesMatch('A', 'A')).to.equal(true)
+    })
+  })
 })

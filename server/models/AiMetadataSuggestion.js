@@ -57,7 +57,8 @@ class AiMetadataSuggestion extends Model {
   static STATUS = {
     PENDING: 'pending',
     ACCEPTED: 'accepted',
-    REJECTED: 'rejected'
+    REJECTED: 'rejected',
+    REVERTED: 'reverted'
   }
 
   /**

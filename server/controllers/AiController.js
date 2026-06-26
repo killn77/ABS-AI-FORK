@@ -132,6 +132,52 @@ class AiController {
   }
 
   /**
+   * POST /api/libraries/:id/ai-cleanup/apply
+   * Apply deterministic cleanup candidates after explicit confirmation.
+   * Access is enforced by LibraryController.middleware; canUpdate is checked here.
+   *
+   * @param {RequestWithUser} req
+   * @param {import('express').Response} res
+   */
+  async applyCleanup(req, res) {
+    if (!req.user.canUpdate) {
+      Logger.warn(`[AiController] User "${req.user.username}" attempted cleanup apply without permission`)
+      return res.sendStatus(403)
+    }
+    try {
+      const result = await AiLibraryCleanupManager.applyCleanupForLibrary(req.library.id, req.user.id, req.body || {})
+      res.json(result)
+    } catch (error) {
+      Logger.error(`[AiController] Failed to apply cleanup for "${req.params.id}"`, error.message)
+      if (error.message?.includes('confirmApply')) return res.status(400).send(error.message)
+      res.status(500).send('Failed to apply AI cleanup')
+    }
+  }
+
+  /**
+   * POST /api/ai-suggestions/:suggestionId/revert
+   * Revert an accepted suggestion when the current value still matches its proposed value.
+   *
+   * @param {RequestWithUser} req
+   * @param {import('express').Response} res
+   */
+  async revertSuggestion(req, res) {
+    if (!req.user.canUpdate) {
+      Logger.warn(`[AiController] User "${req.user.username}" attempted suggestion revert without permission`)
+      return res.sendStatus(403)
+    }
+    try {
+      const suggestion = await AiLibraryCleanupManager.revertSuggestion(req.params.suggestionId, req.user.id)
+      if (!suggestion) return res.sendStatus(404)
+      res.json({ suggestion })
+    } catch (error) {
+      Logger.error(`[AiController] Failed to revert suggestion "${req.params.suggestionId}"`, error.message)
+      if (error.message?.includes('stale') || error.message?.includes('Only accepted')) return res.status(400).send(error.message)
+      res.status(500).send('Failed to revert AI suggestion')
+    }
+  }
+
+  /**
    * POST /api/ai-suggestions/:suggestionId/decision
    * Record a human accept/reject/edit decision. Field write-back on accept is done by the
    * client via PATCH /api/items/:id/media; this only audits the decision + resolves status.

@@ -79,6 +79,7 @@ class ApiRouter {
     this.router.post('/libraries/:id/ai-suggestions/generate', LibraryController.middleware.bind(this), AiController.generateLibrarySuggestions.bind(this))
     this.router.get('/libraries/:id/ai-cleanup/summary', LibraryController.middleware.bind(this), AiController.getCleanupSummary.bind(this))
     this.router.post('/libraries/:id/ai-cleanup/suggestions', LibraryController.middleware.bind(this), AiController.createCleanupSuggestions.bind(this))
+    this.router.post('/libraries/:id/ai-cleanup/apply', LibraryController.middleware.bind(this), AiController.applyCleanup.bind(this))
     this.router.delete('/libraries/:id/issues', LibraryController.middleware.bind(this), LibraryController.removeLibraryItemsWithIssues.bind(this))
     this.router.get('/libraries/:id/episode-downloads', LibraryController.middleware.bind(this), LibraryController.getEpisodeDownloadQueue.bind(this))
     this.router.get('/libraries/:id/series', LibraryController.middleware.bind(this), LibraryController.getAllSeriesForLibrary.bind(this))
@@ -137,6 +138,7 @@ class ApiRouter {
     this.router.post('/items/:id/ai-suggestions', LibraryItemController.middleware.bind(this), AiController.generateSuggestions.bind(this))
     this.router.get('/items/:id/ai-suggestions', LibraryItemController.middleware.bind(this), AiController.getSuggestions.bind(this))
     this.router.post('/ai-suggestions/:suggestionId/decision', AiController.submitDecision.bind(this))
+    this.router.post('/ai-suggestions/:suggestionId/revert', AiController.revertSuggestion.bind(this))
 
     //
     // User Routes
